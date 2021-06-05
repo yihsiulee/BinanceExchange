@@ -7,8 +7,7 @@ const User = () => {
   const [balance, setBalance] = useState()
   const [position, setPosition] = useState()
   const [account, setAccount] = useState({})
-  const [global, setGlobal] = useContext(GlobalContext)
-  console.log('global:', global)
+  const [, setGlobal] = useContext(GlobalContext)
 
   useEffect(() => {
     const getBalanceData = async () => {
@@ -27,7 +26,7 @@ const User = () => {
       })
     }
     getPositionData()
-  }, [])
+  }, [setGlobal])
 
   useEffect(() => {
     const getAccountData = async () => {

@@ -7,7 +7,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import FormControl from '@material-ui/core/FormControl'
 import FormLabel from '@material-ui/core/FormLabel'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { getAccount, marketOrder} from '../api'
+import { getAccount } from '../api'
 import _ from 'lodash'
 import { GlobalContext } from '../context'
 
@@ -17,11 +17,9 @@ const Open = () => {
   const [account, setAccount] = useState({})
   const [freeCollateral, setFreeCollateral] = useState(0)
   const [leverage, setLeverage] = useState(1)
-  const [amount, setAmount] = useState(0)
-  const [global, setGlobal] = useContext(GlobalContext)
+  const [global] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
-  const [symbol, setSymbol] = useState('')
-  // console.log('open global:', global)
+  const [, setSymbol] = useState('')
 
   useEffect(() => {
     const getAccountData = async () => {
@@ -54,18 +52,18 @@ const Open = () => {
   }
 
   //(可用保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
-  const countAmount = () => {
-    //拿計算後和
-    let num = ((freeCollateral * leverage) / price) * (inputValue / 100)
-    setAmount(num)
-  }
+  // const countAmount = () => {
+  //   //拿計算後和
+  //   let num = ((freeCollateral * leverage) / price) * (inputValue / 100)
+  //   setAmount(num)
+  // }
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
     console.log('多空:', selectedValue, '幾趴:', inputValue / 100)
     // console.log(account)
     console.log(freeCollateral)
-    console.log(Math.floor(((freeCollateral * leverage) / price) * (inputValue / 100)*10000)/10000)
+    console.log(Math.floor(((freeCollateral * leverage) / price) * (inputValue / 100) * 10000) / 10000)
     // marketOrder(symbol, selectedValue, Math.floor(((freeCollateral * leverage) / price) * (inputValue / 100)*10000)/10000)
   }
 

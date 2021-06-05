@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useCallback } from 'react'
 import './App.css'
-// import { REACT_APP_USER1_APIKEY, REACT_APP_USER1_SECRET } from './config'
 import { getMarkets, getTicker, getAccount } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
@@ -14,51 +13,17 @@ import Typography from '@material-ui/core/Typography'
 import Slider from '@material-ui/core/Slider'
 import _ from 'lodash'
 import { GlobalContext } from './context'
+import { LEVERAGEMARKS } from './constants'
 
 function App() {
-  const [markets, setMarkets] = useState({}) //市場上所有的幣別
+  const [markets, setMarkets] = useState({}) // 市場上所有的幣別
   const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [ticker, setTicker] = useState({})
   const [slideValue, setSlideValue] = useState(1)
   const [account, setAccount] = useState({})
-  const [global, setGlobal] = useContext(GlobalContext)
+  const [, setGlobal] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
-  // console.log('global:', global)
-
-  const leverageMarks = [
-    {
-      value: 1,
-      label: '1x',
-    },
-    {
-      value: 3,
-      label: '3x',
-    },
-    {
-      value: 5,
-      label: '5x',
-    },
-    {
-      value: 10,
-      label: '10x',
-    },
-    {
-      value: 20,
-      label: '20x',
-    },
-    {
-      value: 50,
-      label: '50x',
-    },
-    {
-      value: 100,
-      label: '100x',
-    },
-    {
-      value: 101,
-      label: '101x',
-    },
-  ]
+  const time = _.get(ticker, 'timestamp', null) // 獲取時間
   // 初始化拿到市場資料
   useEffect(() => {
     const init = async () => {
@@ -70,7 +35,6 @@ function App() {
       }, {})
 
       setMarkets(filteredObject)
-      //    setMarkets(marketsData)
       const accountData = await getAccount()
       setAccount(accountData)
     }
@@ -87,7 +51,7 @@ function App() {
       setTicker(tickerData)
     }
     getTickerData()
-  }, [symbol])
+  }, [symbol, setGlobal, setTicker])
 
   //  更新幣價
   useEffect(() => {
@@ -95,7 +59,7 @@ function App() {
     setGlobal((prev) => {
       return { ...prev, price: ticker?.last }
     })
-  }, [ticker])
+  }, [ticker, setGlobal])
 
   //更新槓桿倍率
   useEffect(() => {
@@ -104,7 +68,7 @@ function App() {
     setGlobal((prev) => {
       return { ...prev, leverage: parseInt(leverage) }
     })
-  }, [account])
+  }, [account, setGlobal])
 
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {
@@ -120,14 +84,30 @@ function App() {
   const handleChangeSymbol = (_, value) => {
     setSymbol(value?.id)
   }
+
+  const callAPI = useCallback(async () => {
+    console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')}`)
+    const tickerData = await getTicker(symbol)
+    setTicker(tickerData)
+  }, [symbol])
+
+  // 定時打API
+  const INTERVAL_TIME = 3000 //間隔時間
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      callAPI()
+    }, INTERVAL_TIME)
+
+    return () => clearInterval(intervalId)
+  }, [callAPI])
+
   return (
     <div className="h-full w-full flex  bg-darkblue">
       <div className="w-1/2  justify-items-center rounded-xl p-4 space-y-2 m-auto bg-lightblue">
         <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">獲取時間:</span>
-          <span className="text-white">{moment(parseInt(ticker?.timestamp)).format('YYYY-MM-DD HH:mm:ss')}</span>
+          <span className="text-white">{time ? moment(parseInt(time)).format('YYYY-MM-DD HH:mm:ss') : ''}</span>
         </div>
-
         <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">幣別:</span>
           <Autocomplete
@@ -139,7 +119,7 @@ function App() {
             getOptionSelected={(option, value) => option.id === value.id}
             style={{ width: 300 }}
             renderInput={(params) => <TextField {...params} variant="outlined" size="small" />}
-            onChange={handleChangeSymbol} //改變時call
+            onChange={handleChangeSymbol}
           />
         </div>
 
@@ -152,7 +132,7 @@ function App() {
           <span className="text-white text-lg mr-5 font-bold">
             <div className="flex items-center">
               <span className="mr-5">槓桿倍數:</span>
-              <Typography id="discrete-slider-custom">{`leverage: ${slideValue}x`}</Typography>
+              <Typography id="discrete-slider-custom">{`${slideValue}x`}</Typography>
             </div>
             <div>
               <Slider
@@ -162,7 +142,7 @@ function App() {
                 aria-labelledby="discrete-slider-custom"
                 step={null}
                 valueLabelDisplay="auto"
-                marks={leverageMarks}
+                marks={LEVERAGEMARKS}
                 min={1}
                 max={101}
               />
@@ -179,8 +159,7 @@ function App() {
         {/* user顯示 */}
         <User />
 
-
-        <UserInfo/>
+        <UserInfo />
       </div>
     </div>
   )
