@@ -1,5 +1,5 @@
 {
-  "name": "FtxExchange",
+  "name": "BinanceExchange",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -46,7 +46,7 @@
     ]
   },
   "main": "index.js",
-  "repository": "git@github.com:yihsiulee/FtxExchange.git",
-  "author": "FtxExchange",
+  "repository": "git@github.com:yihsiulee/BinanceExchange.git",
+  "author": "BinanceExchange",
   "license": "MIT"
 }
