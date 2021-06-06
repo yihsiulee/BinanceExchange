@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getBalance, getPosition, getAccount, getMarkets } from '../api'
+import { getBalance, getPosition, getAccount, getMarkets ,getAllImplicitApiMethods} from '../api'
 import { StyledTableCell } from '../styles'
 import _ from 'lodash'
 import { makeStyles } from '@material-ui/core/styles'
@@ -31,18 +31,21 @@ const UserInfo = () => {
   useEffect(() => {
     const getBalanceData = async () => {
       const balanceData = await getBalance()
+      const test = await getAllImplicitApiMethods()
+      console.log(balanceData)
+      console.log(test)
       setBalance(balanceData)
     }
     getBalanceData()
   }, [])
 
-  useEffect(() => {
-    const getPositionData = async () => {
-      const positionData = await getPosition()
-      setPosition(positionData)
-    }
-    getPositionData()
-  }, [])
+  // useEffect(() => {
+  //   const getPositionData = async () => {
+  //     const positionData = await getPosition()
+  //     setPosition(positionData)
+  //   }
+  //   getPositionData()
+  // }, [])
 
   useEffect(() => {
     const getAccountData = async () => {
@@ -51,13 +54,13 @@ const UserInfo = () => {
     }
     getAccountData()
   }, [])
-  useEffect(() => {
-    const getMarketData = async () => {
-      const marketData = await getMarkets()
-      setMarket(marketData)
-    }
-    getMarketData()
-  }, [])
+  // useEffect(() => {
+  //   const getMarketData = async () => {
+  //     const marketData = await getMarkets()
+  //     setMarket(marketData)
+  //   }
+  //   getMarketData()
+  // }, [])
 
   const classes = useStyles()
 

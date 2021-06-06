@@ -8,9 +8,24 @@ const binance_exchange = new ccxt.binance({
   enableRateLimit: true,
 })
 
+const binance_exchange = new ccxt.binance({
+  apiKey: REACT_APP_USER1_APIKEY,
+  secret: REACT_APP_USER1_SECRET,
+  timeout: 15000,
+  enableRateLimit: true,
+})
+
+// 時間
+export const getServerTime = () => {
+  return binance_exchange.fapiPublicGetTime()
+}
+
+
 // log出來的function可以直接call 如底下getPosition
 export const getAllImplicitApiMethods = () => {
-  return //console.log (binance_exchange)
+  // console.log (binance_exchange)
+  return binance_exchange
+
 }
 
 export const getExchageId = () => {
@@ -26,13 +41,16 @@ export const getExchangeTime = () => {
 }
 
 export const getMarkets = () => {
-  return binance_exchange.loadMarkets()
+  return binance_exchange.fapiPublicGetExchangeInfo()
+  // return ftx_exchange.loadMarkets()
+
 }
 
 //獲取交易對數據
 export const getTicker = (symbol) => {
   if (!symbol) return
-  return binance_exchange.fetchTicker(symbol)
+  return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol})
+  // return binance_exchange.fetch_ticker("BTC/USDT") // 這隻也能用
 }
 
 //查詢餘額
@@ -47,7 +65,7 @@ export const getPosition = () => {
 
 //取得帳戶資訊,裡面有很多資料
 export const getAccount = () => {
-  return binance_exchange.private_get_account()
+  return binance_exchange.fapiPrivateGetAccount()
 }
 
 //改變槓桿值
