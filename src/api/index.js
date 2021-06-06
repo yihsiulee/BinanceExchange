@@ -8,13 +8,6 @@ const binance_exchange = new ccxt.binance({
   enableRateLimit: true,
 })
 
-const binance_exchange = new ccxt.binance({
-  apiKey: REACT_APP_USER1_APIKEY,
-  secret: REACT_APP_USER1_SECRET,
-  timeout: 15000,
-  enableRateLimit: true,
-})
-
 // 時間
 export const getServerTime = () => {
   return binance_exchange.fapiPublicGetTime()
