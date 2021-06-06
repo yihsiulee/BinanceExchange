@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, } from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods} from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -20,12 +20,13 @@ function App() {
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
   const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [ticker, setTicker] = useState({})
-  // const [slideValue, setSlideValue] = useState(1)
-  // const [account, setAccount] = useState({})
+  const [slideValue, setSlideValue] = useState(20)
+  const [position, setPosition] = useState({})
   const [, setGlobal] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
   // const time = _.get(ticker, 'timestamp', null) // 獲取時間
   // 初始化拿到市場資料
+  console.log(getAllImplicitApiMethods())
   useEffect(() => {
     const init = async () => {
       const marketsData = await getMarkets()
@@ -38,12 +39,14 @@ function App() {
 
 
 
-      // const accountData = await getAccount()
-      // setAccount(accountData)
+      const accountData = await getAccount()
+      // console.log("leverage:",Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
+      setPosition(Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
+      setSlideValue(parseInt(Object.values(accountData.positions).filter((item)=>item.symbol===symbol).map((l)=>l.leverage)))
     }
     init()
-  }, [])
-
+  }, [symbol])
+  // console.log("position:",position);
 
   // 當幣別symbol改變時,拿幣的ticker
   useEffect(() => {
@@ -66,24 +69,17 @@ function App() {
     })
   }, [ticker, setGlobal])
 
-  // //更新槓桿倍率
-  // useEffect(() => {
-  //   let leverage = _.get(account, 'result.leverage', 1)
-  //   setSlideValue(parseInt(leverage))
-  //   setGlobal((prev) => {
-  //     return { ...prev, leverage: parseInt(leverage) }
-  //   })
-  // }, [account, setGlobal])
 
-  // //調整槓桿倍率
-  // const handleChangeSlide = (event, newValue) => {
-  //   setSlideValue(newValue)
-  //   setGlobal((prev) => {
-  //     return { ...prev, leverage: newValue }
-  //   })
-  //   // 此comment勿刪除 之後會要用
-  //   // changeLeverage(newValue)
-  // }
+
+  //調整槓桿倍率
+  const handleChangeSlide = (event, newValue) => {
+    setSlideValue(newValue)
+    setGlobal((prev) => {
+      return { ...prev, leverage: newValue }
+    })
+    // 此comment勿刪除 之後會要用
+    // changeLeverage(newValue)
+  }
 
   // //選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
   const handleChangeSymbol = (_, value) => {
@@ -134,10 +130,10 @@ function App() {
           <span className="text-white">{price}</span>
         </div>
 
-        {/* <div className="flex items-center">
+        <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">
             <div className="flex items-center">
-              <span className="mr-5">槓桿倍數:</span>
+              <span className="mr-5">槓桿倍數(初始為20):</span>
               <Typography id="discrete-slider-custom">{`${slideValue}x`}</Typography>
             </div>
             <div>
@@ -154,7 +150,7 @@ function App() {
               />
             </div>
           </span>
-        </div> */}
+        </div>
 
         {/* 開倉參數 */}
         {/* <Open /> */}

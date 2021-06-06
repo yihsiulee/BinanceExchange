@@ -62,9 +62,10 @@ export const getAccount = () => {
 }
 
 //改變槓桿值
-export const changeLeverage = (userLeverage) => {
-  binance_exchange.private_post_account_leverage({
-    leverage: userLeverage,
+export const changeLeverage = (userSymbol,userLeverage) => {
+  binance_exchange.fapiPrivatePostLeverage({
+    "symbol":userSymbol,
+    "leverage": userLeverage,
   })
 }
 
