@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getBalance, getPosition, getAccount, getMarkets ,getAllImplicitApiMethods} from '../api'
+import { getBalance, getPosition, getAccount, getMarkets, getAllImplicitApiMethods, getTrades } from '../api'
 import { StyledTableCell } from '../styles'
 import _ from 'lodash'
 import { makeStyles } from '@material-ui/core/styles'
@@ -27,13 +27,26 @@ const UserInfo = () => {
   const [, setPosition] = useState()
   const [account, setAccount] = useState({})
   const [, setMarket] = useState({})
+  const [trades, setTrades] = useState({})
+
+  useEffect(() => {
+    const getAccountData = async () => {
+      const accountData = await getAccount()
+      const test = await getAllImplicitApiMethods()
+      console.log(accountData)
+
+
+      console.log(test)
+      setAccount(accountData)
+    }
+    getAccountData()
+  }, [])
 
   useEffect(() => {
     const getBalanceData = async () => {
       const balanceData = await getBalance()
-      const test = await getAllImplicitApiMethods()
+      // const test = await getAllImplicitApiMethods()
       console.log(balanceData)
-      console.log(test)
       setBalance(balanceData)
     }
     getBalanceData()
@@ -48,19 +61,13 @@ const UserInfo = () => {
   // }, [])
 
   useEffect(() => {
-    const getAccountData = async () => {
-      const accountData = await getAccount()
-      setAccount(accountData)
+    const getTradesData = async () => {
+      const tradesData = await getTrades()
+      console.log(tradesData)
+      setMarket(tradesData)
     }
-    getAccountData()
+    getTradesData()
   }, [])
-  // useEffect(() => {
-  //   const getMarketData = async () => {
-  //     const marketData = await getMarkets()
-  //     setMarket(marketData)
-  //   }
-  //   getMarketData()
-  // }, [])
 
   const classes = useStyles()
 
@@ -71,23 +78,22 @@ const UserInfo = () => {
           <TableRow>
             <StyledTableCell>帳號資訊</StyledTableCell>
             <StyledTableCell>帳號總值</StyledTableCell>
-            <StyledTableCell>已使用</StyledTableCell>
             <StyledTableCell>帳號餘額</StyledTableCell>
+            <StyledTableCell>已使用</StyledTableCell>
+            <StyledTableCell>已開倉%數</StyledTableCell>
             <StyledTableCell align="right">本日獲利</StyledTableCell>
             <StyledTableCell align="right">本週獲利</StyledTableCell>
-            <StyledTableCell align="right">已開倉%數</StyledTableCell>
-            <StyledTableCell align="right">Total assets</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {/* {rows.map((row) => ( */}
           <TableRow>
             <StyledTableCell>{_.get(account, 'result.username', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'result.totalAccountValue', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(balance, 'USD.free', 0)}</StyledTableCell>
+            <StyledTableCell align="right">{_.get(account, 'totalWalletBalance', 0)}</StyledTableCell>
+            <StyledTableCell align="right">{_.get(account, 'availableBalance', 0)}</StyledTableCell>
+            <StyledTableCell align="right">{_.get(account, 'totalPositionInitialMargin', 0)}</StyledTableCell>
+            <StyledTableCell align="right">{(_.get(account, 'totalPositionInitialMargin', 0) / _.get(account, 'totalWalletBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
             <StyledTableCell align="right">{_.get(balance, 'used.USD', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'result.username', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'result.username', 0)}</StyledTableCell>
             <StyledTableCell align="right">{_.get(account, 'result.username', 0)}</StyledTableCell>
           </TableRow>
           {/* ))} */}
