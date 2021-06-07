@@ -6,6 +6,12 @@ const binance_exchange = new ccxt.binance({
   secret: REACT_APP_USER1_SECRET,
   timeout: 15000,
   enableRateLimit: true,
+  options: {
+    adjustForTimeDifference: true,
+    verbose: true, // if needed, not mandatory
+    recvWindow: 10000000, // not really needed
+    defaultType: "future",//預設合約市場
+  },
 })
 
 // 時間
@@ -16,7 +22,7 @@ export const getServerTime = () => {
 
 // log出來的function可以直接call 如底下getPosition
 export const getAllImplicitApiMethods = () => {
-  console.log (binance_exchange)
+  // console.log (binance_exchange)
   return binance_exchange
 
 }
@@ -42,8 +48,8 @@ export const getMarkets = () => {
 //獲取交易對數據
 export const getTicker = (symbol) => {
   if (!symbol) return
-  return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol})
-  // return binance_exchange.fetch_ticker("BTC/USDT") // 這隻也能用
+  // return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol}) //這隻的symbol不用slash(/)
+  return binance_exchange.fetch_ticker(symbol) // 這隻要slash
 }
 
 //查詢餘額
