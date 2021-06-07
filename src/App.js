@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods} from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage} from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -20,7 +20,7 @@ function App() {
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
   const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [ticker, setTicker] = useState({})
-  const [slideValue, setSlideValue] = useState(20)
+  const [slideValue, setSlideValue] = useState(1)
   const [position, setPosition] = useState({})
   const [, setGlobal] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
@@ -78,7 +78,7 @@ function App() {
       return { ...prev, leverage: newValue }
     })
     // 此comment勿刪除 之後會要用
-    // changeLeverage(newValue)
+    changeLeverage(symbol,newValue)
   }
 
   // //選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
@@ -133,22 +133,40 @@ function App() {
         <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">
             <div className="flex items-center">
-              <span className="mr-5">槓桿倍數(初始為20):</span>
-              <Typography id="discrete-slider-custom">{`${slideValue}x`}</Typography>
+              <span className="mr-5">槓桿倍數(官方初始為20):</span>
+              <Typography id="discrete-slider-custom">{`${slideValue ?slideValue:'請選擇幣別'}x`}</Typography>
             </div>
-            <div>
-              <Slider
-                style={{ width: 400 }}
-                value={slideValue}
-                onChange={handleChangeSlide}
-                aria-labelledby="discrete-slider-custom"
-                step={null}
-                valueLabelDisplay="auto"
-                marks={LEVERAGEMARKS}
-                min={1}
-                max={101}
-              />
-            </div>
+            { 
+            slideValue ? 
+              <div>
+                <Slider
+                  style={{ width: 400 }}
+                  value={slideValue}
+                  onChange={handleChangeSlide}
+                  aria-labelledby="discrete-slider-custom"
+                  step={1}
+                  valueLabelDisplay="auto"
+                  marks={LEVERAGEMARKS}
+                  min={1}
+                  max={5}
+                />
+              </div>
+            :
+              <div>
+                <Slider
+                  disabled
+                  style={{ width: 400 }}
+                  value={slideValue}
+                  onChange={handleChangeSlide}
+                  aria-labelledby="discrete-slider-custom"
+                  step={1}
+                  valueLabelDisplay="auto"
+                  marks={LEVERAGEMARKS}
+                  min={1}
+                  max={5}
+                />
+              </div>
+            }
           </span>
         </div>
 
