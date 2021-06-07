@@ -43,6 +43,7 @@ const Open = () => {
   //取得槓桿
   useEffect(() => {
     setPrice(global.price)
+    setLeverage(global.leverage)
     setSymbol(global.symbol)
     setTime(global.time)
   }, [global])
@@ -63,7 +64,11 @@ const Open = () => {
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
-    console.log("symbol:",symbol,'多空:', side, '幾趴:', inputValue ,"買入數量:",parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000))
+    console.log("symbol:",symbol,
+    '多空:', side, 
+    '幾趴:', inputValue ,
+    "買入數量:",parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000),
+    "availableBalance",availableBalance,"leverage",leverage,"price",price,"inputValue",inputValue)
     // console.log(parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)))
     // console.log(((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)).toPrecision(8))
     // console.log(Decimal(((availableBalance * leverage) / price) * (inputValue / 100)).toFixed(4))
