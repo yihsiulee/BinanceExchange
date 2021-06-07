@@ -16,7 +16,7 @@ export const getServerTime = () => {
 
 // log出來的function可以直接call 如底下getPosition
 export const getAllImplicitApiMethods = () => {
-  // console.log (binance_exchange)
+  console.log (binance_exchange)
   return binance_exchange
 
 }
@@ -48,7 +48,7 @@ export const getTicker = (symbol) => {
 
 //查詢餘額
 export const getBalance = () => {
-  return binance_exchange.fetchBalance()
+  return binance_exchange.fapiPrivateGetIncome()
 }
 
 //查詢現在合約倉位資訊
@@ -58,6 +58,7 @@ export const getPosition = () => {
 
 //取得帳戶資訊,裡面有很多資料
 export const getAccount = () => {
+  // return binance_exchange.fapiPrivate_get_account()
   return binance_exchange.fapiPrivateGetAccount()
 }
 
@@ -74,3 +75,10 @@ export const changeLeverage = (userLeverage) => {
 export const marketOrder = (symbol, side, amount) => {
   binance_exchange.createOrder(symbol, 'market', side, amount)
 }
+
+//取得交易資料
+export const getTrades = () => {
+  // return binance_exchange.fapiPrivate_get_account()
+  return binance_exchange.fapiPrivateGetUserTrades()
+}
+
