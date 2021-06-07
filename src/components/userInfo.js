@@ -46,7 +46,7 @@ const UserInfo = () => {
     const getBalanceData = async () => {
       const balanceData = await getBalance()
       // const test = await getAllImplicitApiMethods()
-      console.log(balanceData)
+      // console.log(balanceData)
       setBalance(balanceData)
     }
     getBalanceData()
