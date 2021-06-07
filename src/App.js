@@ -20,9 +20,11 @@ function App() {
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
   const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [ticker, setTicker] = useState({})
+
   const [slideValue, setSlideValue] = useState(1)
   const [position, setPosition] = useState({})
-  const [, setGlobal] = useContext(GlobalContext)
+  const [global, setGlobal] = useContext(GlobalContext)
+
   const [price, setPrice] = useState(0)
   // const time = _.get(ticker, 'timestamp', null) // 獲取時間
   // 初始化拿到市場資料
@@ -30,8 +32,7 @@ function App() {
   useEffect(() => {
     const init = async () => {
       const marketsData = await getMarkets()
-      
-      console.log(marketsData)
+
       setMarkets(marketsData["symbols"])
 
       const timeData = await getServerTime()
@@ -55,7 +56,7 @@ function App() {
       setGlobal((prev) => {
         return { ...prev, symbol }
       })
-      
+
       setTicker(tickerData)
     }
     getTickerData()
@@ -83,25 +84,26 @@ function App() {
 
   // //選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
   const handleChangeSymbol = (_, value) => {
-    console.log(value.id)
     setSymbol(value?.id)
   }
 
-  // const callAPI = useCallback(async () => {
-  //   console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')}`)
-  //   const tickerData = await getTicker(symbol)
-  //   setTicker(tickerData)
-  // }, [symbol])
+  const callAPI = useCallback(async () => {
+    // console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')}`)
+    const tickerData = await getTicker(symbol)
+    setTicker(tickerData)
+    if (symbol)
+      setTime(tickerData?.time)
+  }, [symbol])
 
-  // // 定時打API
-  // const INTERVAL_TIME = 3000 //間隔時間
-  // useEffect(() => {
-  //   const intervalId = setInterval(() => {
-  //     callAPI()
-  //   }, INTERVAL_TIME)
+  // 定時打API
+  const INTERVAL_TIME = 3000 //間隔時間
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      callAPI()
+    }, INTERVAL_TIME)
 
-  //   return () => clearInterval(intervalId)
-  // }, [callAPI])
+    return () => clearInterval(intervalId)
+  }, [callAPI])
 
   return (
     <div className="h-full w-full flex  bg-darkblue">
@@ -121,11 +123,11 @@ function App() {
             getOptionSelected={(option, value) => option.id === value.id}
             style={{ width: 300 }}
             renderInput={(params) => <TextField {...params} variant="outlined" size="small" />}
-          onChange={handleChangeSymbol}
+            onChange={handleChangeSymbol}
           />
         </div>
 
-         <div className="flex items-center">
+        <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">幣價:</span>
           <span className="text-white">{price}</span>
         </div>
@@ -179,7 +181,7 @@ function App() {
         {/* user顯示 */}
         {/* <User /> */}
 
-        <UserInfo /> 
+        <UserInfo />
       </div>
     </div>
   )
