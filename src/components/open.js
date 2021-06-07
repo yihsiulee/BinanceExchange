@@ -22,7 +22,7 @@ const Open = () => {
   const [global] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
   const [symbol, setSymbol] = useState('')
-  const [amount, setAmount] = useState(0)
+ 
 
   
   useEffect(() => {
@@ -52,7 +52,6 @@ const Open = () => {
   }
   const handleChangeInput = (event) => {
     setInpuValue(event.target.value)
-    setAmount(parseFloat(Math.floor(((availableBalance * leverage) / price) * ((event.target.value) / 100) * 1000) / 1000))
   }
 
   //(可用保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
@@ -64,12 +63,12 @@ const Open = () => {
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
-    console.log("symbol:",symbol,'多空:', side, '幾趴:', inputValue ,"買入數量:",amount)
+    console.log("symbol:",symbol,'多空:', side, '幾趴:', inputValue ,"買入數量:",parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000))
     // console.log(parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)))
     // console.log(((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)).toPrecision(8))
     // console.log(Decimal(((availableBalance * leverage) / price) * (inputValue / 100)).toFixed(4))
     console.log((parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000))))
-    marketOrder(symbol, side, amount)
+    marketOrder(symbol, side, parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000))
   }
 
   return (
@@ -121,14 +120,14 @@ const Open = () => {
 
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
-          買入數量:{parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000))}
+          可買入數量:{((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000))}
           </span>
         
       </div>
 
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
-          實際買入數量:{amount}
+          實際買入數量:{parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000)}
           </span>
         
       </div>

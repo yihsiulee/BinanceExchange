@@ -47,11 +47,11 @@ function App() {
       // console.log("leverage:",Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
 
       setPosition(Object.values(accountData.positions).filter((item) => item.positionAmt > 0))
-      setSlideValue(parseInt(Object.values(accountData.positions).filter((item) => item.symbol === symbol.replace("/","")).map((l) => l.leverage)))
+      setSlideValue(parseInt(Object.values(accountData.positions).filter((item) => item.symbol === symbol?.replace("/","")).map((l) => l.leverage)))
       setGlobal((prev) => {
         return { 
           ...prev,
-          leverage: parseInt(Object.values(accountData.positions).filter((item)=>item.symbol===symbol).map((l)=>l.leverage)),
+          leverage: parseInt(Object.values(accountData.positions).filter((item) => item.symbol === symbol?.replace("/","")).map((l) => l.leverage)),
           time: timeData["serverTime"] }
       })
     }
@@ -77,7 +77,7 @@ function App() {
   useEffect(() => {
     setPrice(ticker?.last)
     setGlobal((prev) => {
-      return { ...prev, price: ticker?.price }
+      return { ...prev, price: ticker?.last }
     })
   }, [ticker, setGlobal])
 
