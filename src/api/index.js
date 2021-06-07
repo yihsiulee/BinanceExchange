@@ -1,4 +1,5 @@
 import ccxt from 'ccxt'
+import { useEffect } from 'react'
 import { REACT_APP_USER1_APIKEY, REACT_APP_USER1_SECRET } from '../config'
 
 const binance_exchange = new ccxt.binance({
@@ -6,7 +7,14 @@ const binance_exchange = new ccxt.binance({
   secret: REACT_APP_USER1_SECRET,
   timeout: 15000,
   enableRateLimit: true,
+  'options': {
+    'adjustForTimeDifference': true,
+    'verbose': true, // if needed, not mandatory
+    'recvWindow': 10000000, // not really needed
+    'defaultType': 'future',//預設合約市場
+  },
 })
+
 
 // 時間
 export const getServerTime = () => {
@@ -46,12 +54,18 @@ export const getTicker = (symbol) => {
   // return binance_exchange.fetch_ticker("BTC/USDT") // 這隻也能用
 }
 
-//查詢餘額
-export const getBalance = () => {
+
+export const getIncome = () => {
   return binance_exchange.fapiPrivateGetIncome()
 }
 
-//查詢現在合約倉位資訊
+//查詢餘額
+export const getBalance = () => {
+  return binance_exchange.fapiPrivateV2GetBalance()
+}
+
+//查詢現在合約倉位資訊 
+//binance 的fapiPrivateGetAccount裡面有position資訊
 export const getPosition = () => {
   return binance_exchange.fetch_positions()
 }
@@ -74,7 +88,14 @@ export const changeLeverage = (userSymbol,userLeverage) => {
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
 export const marketOrder = (symbol, side, amount) => {
-  binance_exchange.createOrder(symbol, 'market', side, amount)
+  binance_exchange.createOrder(symbol,"market",side,amount)
+  // binance_exchange.fapiPrivatePostOrder({
+  //   "symbol":"BTCUSDT", 
+  //   "side":"BUY",
+  //   "type":"MARKET",
+  //   "quantity":"0.0003",
+  //   "timestamp": "1623063206357"
+  // })
 }
 
 //取得交易資料

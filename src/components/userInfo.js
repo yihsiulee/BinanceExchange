@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getBalance, getPosition, getAccount, getMarkets, getAllImplicitApiMethods, getTrades } from '../api'
+import { getIncome, getPosition, getAccount, getMarkets, getAllImplicitApiMethods, getTrades } from '../api'
 import { StyledTableCell } from '../styles'
 import _ from 'lodash'
 import { makeStyles } from '@material-ui/core/styles'
@@ -43,13 +43,13 @@ const UserInfo = () => {
   }, [])
 
   useEffect(() => {
-    const getBalanceData = async () => {
-      const balanceData = await getBalance()
+    const getIncomeData = async () => {
+      const balanceData = await getIncome()
       // const test = await getAllImplicitApiMethods()
       console.log(balanceData)
       setBalance(balanceData)
     }
-    getBalanceData()
+    getIncomeData()
   }, [])
 
   // useEffect(() => {

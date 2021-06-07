@@ -14,11 +14,12 @@ import Slider from '@material-ui/core/Slider'
 import _ from 'lodash'
 import { GlobalContext } from './context'
 import { LEVERAGEMARKS } from './constants'
+import bigInt from 'big-integer'
 
 function App() {
-  const [time, setTime] = useState({}) // 市場上所有的幣別
+  const [time, setTime] = useState()
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
-  const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
+  const [symbol, setSymbol] = useState() // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [ticker, setTicker] = useState({})
 
   const [slideValue, setSlideValue] = useState(1)
@@ -26,9 +27,9 @@ function App() {
   const [global, setGlobal] = useContext(GlobalContext)
 
   const [price, setPrice] = useState(0)
-  // const time = _.get(ticker, 'timestamp', null) // 獲取時間
+  // console.log(getAllImplicitApiMethods())
+  // console.log("apps:",time)
   // 初始化拿到市場資料
-  console.log(getAllImplicitApiMethods())
   useEffect(() => {
     const init = async () => {
       const marketsData = await getMarkets()
@@ -38,12 +39,16 @@ function App() {
       const timeData = await getServerTime()
       setTime(timeData["serverTime"])
 
-
-
       const accountData = await getAccount()
       // console.log("leverage:",Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
       setPosition(Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
       setSlideValue(parseInt(Object.values(accountData.positions).filter((item)=>item.symbol===symbol).map((l)=>l.leverage)))
+      setGlobal((prev) => {
+        return { 
+          ...prev,
+          leverage: parseInt(Object.values(accountData.positions).filter((item)=>item.symbol===symbol).map((l)=>l.leverage)),
+          time: timeData["serverTime"] }
+      })
     }
     init()
   }, [symbol])
@@ -66,7 +71,7 @@ function App() {
   useEffect(() => {
     setPrice(ticker?.price)
     setGlobal((prev) => {
-      return { ...prev, price: ticker?.last }
+      return { ...prev, price: ticker?.price }
     })
   }, [ticker, setGlobal])
 
@@ -173,7 +178,7 @@ function App() {
         </div>
 
         {/* 開倉參數 */}
-        {/* <Open /> */}
+        <Open />
 
         {/* 平倉參數 */}
         {/* <Close /> */}
@@ -181,7 +186,7 @@ function App() {
         {/* user顯示 */}
         {/* <User /> */}
 
-        <UserInfo />
+        {/* <UserInfo /> */}
       </div>
     </div>
   )
