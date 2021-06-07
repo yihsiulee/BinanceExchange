@@ -7,48 +7,52 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import FormControl from '@material-ui/core/FormControl'
 import FormLabel from '@material-ui/core/FormLabel'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { getAccount } from '../api'
+import { getBalance, marketOrder } from '../api'
 import _ from 'lodash'
 import { GlobalContext } from '../context'
-
+import Decimal from 'decimal.js'
+import bigInt from 'big-integer'
 const Open = () => {
-  const [selectedValue, setSelectedValue] = useState('buy')
+  const [time, setTime] = useState()
+  const [side, setSide] = useState('buy')
   const [inputValue, setInpuValue] = useState('')
-  const [account, setAccount] = useState({})
-  const [freeCollateral, setFreeCollateral] = useState(0)
+  const [balance, setBalance] = useState({})
+  const [availableBalance, setAvailableBalance] = useState(0)
   const [leverage, setLeverage] = useState(1)
   const [global] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
-  const [, setSymbol] = useState('')
+  const [symbol, setSymbol] = useState('')
+  const [amount, setAmount] = useState(0)
 
+  
   useEffect(() => {
-    const getAccountData = async () => {
-      const accountData = await getAccount()
-      setAccount(accountData)
+    const getBalanceData = async () => {
+      const balanceData = await getBalance()
+      setBalance(balanceData)
+      //取得可用資金
+      console.log("balance",Object.values(balanceData).filter((item)=>item.asset==='USDT').map((b)=> parseFloat(b.availableBalance)))
+      setAvailableBalance(parseFloat(Object.values(balanceData).filter((item)=>item.asset==='USDT').map((b)=> b.availableBalance)))
     }
-    getAccountData()
+    getBalanceData()
   }, [])
+  console.log('balance:',balance)
+  console.log(availableBalance)
+  console.log("glo:",global)
 
-  //取得可用資金
-  useEffect(() => {
-    let collateral = _.get(account, 'result.freeCollateral', 0)
-    setFreeCollateral(parseInt(collateral))
-  }, [account])
 
   //取得槓桿
   useEffect(() => {
-    setLeverage(global.leverage)
     setPrice(global.price)
     setSymbol(global.symbol)
-    // let leverage = _.get(account, 'result.leverage', 1)
-    // setSlideValue(parseInt(leverage))
+    setTime(global.time)
   }, [global])
 
   const handleChangeSelect = (event) => {
-    setSelectedValue(event.target.value)
+    setSide(event.target.value)
   }
   const handleChangeInput = (event) => {
     setInpuValue(event.target.value)
+    setAmount(parseFloat(Math.floor(((availableBalance * leverage) / price) * ((event.target.value) / 100) * 1000) / 1000))
   }
 
   //(可用保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
@@ -60,11 +64,12 @@ const Open = () => {
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
-    console.log('多空:', selectedValue, '幾趴:', inputValue / 100)
-    // console.log(account)
-    console.log(freeCollateral)
-    console.log(Math.floor(((freeCollateral * leverage) / price) * (inputValue / 100) * 10000) / 10000)
-    // marketOrder(symbol, selectedValue, Math.floor(((freeCollateral * leverage) / price) * (inputValue / 100)*10000)/10000)
+    console.log("symbol:",symbol,'多空:', side, '幾趴:', inputValue ,"買入數量:",amount)
+    // console.log(parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)))
+    // console.log(((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000)).toPrecision(8))
+    // console.log(Decimal(((availableBalance * leverage) / price) * (inputValue / 100)).toFixed(4))
+    console.log((parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 1000) / 1000))))
+    marketOrder(symbol, side, amount)
   }
 
   return (
@@ -75,7 +80,7 @@ const Open = () => {
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
           <span className="mr-5">多空倉切換:</span>
-          <span>{selectedValue}</span>
+          <span>{side}</span>
           <div>
             <FormControl component="fieldset">
               <FormLabel component="legend"></FormLabel>
@@ -84,7 +89,7 @@ const Open = () => {
                 defaultValue="buy"
                 aria-label="多空"
                 name="longOrShort"
-                value={selectedValue}
+                value={side}
                 onChange={handleChangeSelect}
               >
                 <FormControlLabel value="buy" control={<Radio />} label="buy" />
@@ -112,6 +117,20 @@ const Open = () => {
           }}
         />
         {/* {console.log(inputValue)} */}
+      </div>
+
+      <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">
+          買入數量:{parseFloat((Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) * 10000) / 10000))}
+          </span>
+        
+      </div>
+
+      <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">
+          實際買入數量:{amount}
+          </span>
+        
       </div>
 
       <div className="flex items-center">
