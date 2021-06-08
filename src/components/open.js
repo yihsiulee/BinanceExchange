@@ -35,9 +35,9 @@ const Open = () => {
     }
     getBalanceData()
   }, [])
-  console.log('balance:',balance)
-  console.log(availableBalance)
-  console.log("glo:",global)
+  // console.log('balance:',balance)
+  // console.log(availableBalance)
+  // console.log("glo:",global)
 
 
   //取得槓桿
