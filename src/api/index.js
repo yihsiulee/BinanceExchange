@@ -8,26 +8,23 @@ const binance_exchange = new ccxt.binance({
   timeout: 15000,
   enableRateLimit: true,
 
-  'options': {
-    'adjustForTimeDifference': true,
-    'verbose': true, // if needed, not mandatory
-    'recvWindow': 10000000, // not really needed
-    'defaultType': 'future',//預設合約市場
+  options: {
+    adjustForTimeDifference: true,
+    verbose: true, // if needed, not mandatory
+    recvWindow: 10000000, // not really needed
+    defaultType: 'future', //預設合約市場
   },
 })
-
 
 // 時間
 export const getServerTime = () => {
   return binance_exchange.fapiPublicGetTime()
 }
 
-
 // log出來的function可以直接call 如底下getPosition
 export const getAllImplicitApiMethods = () => {
   // console.log (binance_exchange)
   return binance_exchange
-
 }
 
 export const getExchageId = () => {
@@ -45,7 +42,6 @@ export const getExchangeTime = () => {
 export const getMarkets = () => {
   return binance_exchange.fapiPublicGetExchangeInfo()
   // return ftx_exchange.loadMarkets()
-
 }
 
 //獲取交易對數據
@@ -54,7 +50,6 @@ export const getTicker = (symbol) => {
   // return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol}) //這隻的symbol不用slash(/)
   return binance_exchange.fetch_ticker(symbol) // 這隻要slash
 }
-
 
 export const getIncome = () => {
   return binance_exchange.fapiPrivateGetIncome()
@@ -65,7 +60,7 @@ export const getBalance = () => {
   return binance_exchange.fapiPrivateV2GetBalance()
 }
 
-//查詢現在合約倉位資訊 
+//查詢現在合約倉位資訊
 //binance 的fapiPrivateGetAccount裡面有position資訊
 export const getPosition = () => {
   return binance_exchange.fetch_positions()
@@ -78,10 +73,10 @@ export const getAccount = () => {
 }
 
 //改變槓桿值
-export const changeLeverage = (userSymbol,userLeverage) => {
+export const changeLeverage = (userSymbol, userLeverage) => {
   binance_exchange.fapiPrivatePostLeverage({
-    "symbol":userSymbol,
-    "leverage": userLeverage,
+    symbol: userSymbol,
+    leverage: userLeverage,
   })
 }
 
@@ -89,9 +84,9 @@ export const changeLeverage = (userSymbol,userLeverage) => {
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
 export const marketOrder = (symbol, side, amount) => {
-  binance_exchange.createOrder(symbol,"market",side,amount)
+  binance_exchange.createOrder(symbol, 'market', side, amount)
   // binance_exchange.fapiPrivatePostOrder({
-  //   "symbol":"BTCUSDT", 
+  //   "symbol":"BTCUSDT",
   //   "side":"BUY",
   //   "type":"MARKET",
   //   "quantity":"0.0003",
@@ -104,4 +99,3 @@ export const getTrades = () => {
   // return binance_exchange.fapiPrivate_get_account()
   return binance_exchange.fapiPrivateGetUserTrades()
 }
-

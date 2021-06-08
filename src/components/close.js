@@ -42,10 +42,6 @@ const Close = () => {
       <div className="flex items-center">
         <span className="text-red-600 text-lg mr-5 font-bold">止盈/止損參數:</span>
       </div>
-      {/* <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">平倉時間:</span>
-        <InputTextField label="平倉時間" variant="outlined" color="primary" size="small" />
-      </div> */}
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">止損%數:</span>
         <InputTextField
