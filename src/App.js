@@ -36,9 +36,8 @@ function App() {
 
       const timeData = await getServerTime()
       const accountData = await getAccount()
-      // console.log("leverage:",Object.values(accountData.positions).filter((item)=>item.positionAmt>0))
-
-      setPosition(Object.values(accountData.positions).filter((item) => item.positionAmt > 0))
+      
+      setPosition(Object.values(accountData.positions).filter((item) => (item.positionAmt > 0)||(item.positionAmt<0)))
       setSlideValue(
         parseInt(
           Object.values(accountData.positions)
@@ -54,13 +53,17 @@ function App() {
               .filter((item) => item.symbol === symbol?.replace('/', ''))
               .map((l) => l.leverage)
           ),
+          position: 
+            Object.values(accountData.positions)
+              .filter((item) => ( Math.abs(item.positionAmt) > 0 ) //絕對值
+          ) ,
           time: timeData['serverTime'],
         }
       })
     }
     init()
-  }, [symbol])
-
+  }, [symbol]) 
+  console.log("AppGlo:",global)
   // 當幣別symbol改變時,拿幣的ticker
   useEffect(() => {
     const getTickerData = async () => {

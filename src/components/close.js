@@ -3,33 +3,41 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
+import { marketOrder } from '../api'
 import _ from 'lodash'
 
 const Close = () => {
   const [global] = useContext(GlobalContext)
   const [position, setPosition] = useState()
   const [inputValue, setInpuValue] = useState()
+  const [symbol, setSymbol] = useState('')
 
   //初始化拿position
   useEffect(() => {
-    setPosition(_.get(global, 'positionData', 0))
+    // setPosition(_.get(global, 'position', 0))
+    setPosition(global.position)
+    setSymbol(global.symbol)
   }, [global])
 
+  //一鍵平倉 func 
   const sellAll = () => {
-    position
-      .filter((item) => item.size > 0)
-      .forEach((newPosition) => {
-        console.log(newPosition.future, 'old', newPosition.side, newPosition.size)
-        let reverseSide = newPosition.side
-        if (reverseSide === 'buy') {
-          reverseSide = 'sell'
+    Object.values(position)
+      .filter((item) => Math.abs(item.positionAmt)> 0)
+      .map((p) => {
+        console.log(p.future, 'old', p.positionAmt, Math.abs(p.positionAmt))
+        let side = ''
+        //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
+        if (p.positionAmt > 0 ) {
+          side = 'sell'
         }
-        if (reverseSide.side === 'sell') {
-          reverseSide = 'buy'
+        if (p.positionAmt < 0) {
+          side = 'buy'
         }
-        console.log(newPosition.future, 'new', reverseSide, (newPosition.size * inputValue) / 100)
-        // 此行勿刪
-        // marketOrder(newPosition.future, reverseSide, (newPosition.size*inputValue/100))
+        // 勿刪
+        // console.log("%%%",(inputValue / 100).toFixed(2))
+        // console.log(symbol, 'new', side, Math.floor(Math.abs(p.positionAmt) * (inputValue / 100) * 1000)/1000)
+        
+        marketOrder(symbol, side, Math.floor(Math.abs(p.positionAmt) * (inputValue / 100) * 1000)/1000)
       })
   }
 
@@ -106,9 +114,17 @@ const Close = () => {
         />
       </div>
       <div className="flex items-center">
-        <Button onClick={sellAll} size="small" variant="contained" color="primary">
+
+       {
+       symbol?
+       <Button onClick={sellAll} size="small" variant="contained" color="primary">
           confirm
         </Button>
+        :
+        <Button disabled onClick={sellAll} size="small" variant="contained" color="primary">
+          confirm
+        </Button>
+        }
       </div>
     </div>
   )
