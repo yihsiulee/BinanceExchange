@@ -4,27 +4,29 @@ import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { marketOrder } from '../api'
-import _ from 'lodash'
+import _, { set } from 'lodash'
 
 const Close = () => {
   const [global] = useContext(GlobalContext)
   const [position, setPosition] = useState()
   const [inputValue, setInpuValue] = useState()
   const [symbol, setSymbol] = useState('')
+  const [minQty, setMinQty] = useState(0)
 
   //初始化拿position
   useEffect(() => {
     // setPosition(_.get(global, 'position', 0))
     setPosition(global.position)
     setSymbol(global.symbol)
+    setMinQty(global.minQty)
   }, [global])
 
-  //一鍵平倉 func 
+  //一鍵平倉 func 優化:運算可以拿去period
   const sellAll = () => {
     Object.values(position)
       .filter((item) => Math.abs(item.positionAmt)> 0)
       .map((p) => {
-        console.log(p.future, 'old', p.positionAmt, Math.abs(p.positionAmt))
+        console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
         let side = ''
         //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
         if (p.positionAmt > 0 ) {
@@ -33,11 +35,9 @@ const Close = () => {
         if (p.positionAmt < 0) {
           side = 'buy'
         }
-        // 勿刪
-        // console.log("%%%",(inputValue / 100).toFixed(2))
-        // console.log(symbol, 'new', side, Math.floor(Math.abs(p.positionAmt) * (inputValue / 100) * 1000)/1000)
         
-        marketOrder(symbol, side, Math.floor(Math.abs(p.positionAmt) * (inputValue / 100) * 1000)/1000)
+        
+        marketOrder(symbol, side, Math.floor(  Math.abs(p.positionAmt) * (inputValue / 100) / minQty ) * minQty)
       })
   }
 

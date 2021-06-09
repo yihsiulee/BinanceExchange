@@ -39,6 +39,11 @@ export const getExchangeTime = () => {
   return binance_exchange.iso8601(binance_exchange.milliseconds())
 }
 
+//為了獲取交易最低單位
+export const getMarketsForLim = () => {
+  return binance_exchange.fetchMarkets()
+}
+
 export const getMarkets = () => {
   return binance_exchange.fapiPublicGetExchangeInfo()
   // return ftx_exchange.loadMarkets()

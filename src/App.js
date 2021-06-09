@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage } from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage, getMarketsForLim } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -25,6 +25,7 @@ function App() {
   const [global, setGlobal] = useContext(GlobalContext)
   const time = symbol ? _.get(global, 'time', '') : '' // 獲取時間 (如果沒選幣別,不顯示時間)
   const [price, setPrice] = useState(0)
+  const [minQty, setMinQty] = useState(0)
 
   // console.log(getAllImplicitApiMethods())
 
@@ -33,11 +34,12 @@ function App() {
     const init = async () => {
       const marketsData = await getMarkets()
       setMarkets(marketsData['symbols'])
-
+      const ccxtMarket = await getMarketsForLim()
+      setMinQty(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> i.limits.amount.min))
       const timeData = await getServerTime()
       const accountData = await getAccount()
       
-      setPosition(Object.values(accountData.positions).filter((item) => (item.positionAmt > 0)||(item.positionAmt<0)))
+      setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setSlideValue(
         parseInt(
           Object.values(accountData.positions)
@@ -58,6 +60,8 @@ function App() {
               .filter((item) => ( Math.abs(item.positionAmt) > 0 ) //絕對值
           ) ,
           time: timeData['serverTime'],
+          //parseFloat 把陣列變成一個float值
+          minQty: parseFloat(Object.values(ccxtMarket).filter((item)=>item.symbol===symbol).map((i)=>  i.limits.amount.min))
         }
       })
     }
