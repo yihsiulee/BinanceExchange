@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage, getMarketsForLim } from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -18,8 +18,7 @@ import Period from './components/period'
 
 function App() {
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
-  const [symbol, setSymbol] = useState() // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
-  const [ticker, setTicker] = useState({})
+  const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [slideValue, setSlideValue] = useState(1)
   const [position, setPosition] = useState({})
   const [global, setGlobal] = useContext(GlobalContext)
@@ -32,18 +31,17 @@ function App() {
   // 初始化拿到市場資料
   useEffect(() => {
     const init = async () => {
-      const marketsData = await getMarkets()
-      setMarkets(marketsData['symbols'])
-      const ccxtMarket = await getMarketsForLim()
-      setMinQty(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> i.limits.amount.min))
+      const ccxtMarket = await getMarkets()
       const timeData = await getServerTime()
       const accountData = await getAccount()
-      
+
+      setMinQty(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> i.limits.amount.min))
+      setMarkets(ccxtMarket.map((item)=>item.symbol))      
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setSlideValue(
         parseInt(
           Object.values(accountData.positions)
-            .filter((item) => item.symbol === symbol?.replace('/', ''))
+            .filter((item) => item.symbol === symbol?.replace('/', '')) //拿掉斜線 不用動
             .map((l) => l.leverage)
         )
       )
@@ -65,30 +63,23 @@ function App() {
         }
       })
     }
+
     init()
-  }, [symbol]) 
+
+  }, [symbol])  //換symbol時,要更新leverage,更新MinQty
   console.log("AppGlo:",global)
-  // 當幣別symbol改變時,拿幣的ticker
+  // 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
     const getTickerData = async () => {
       const tickerData = await getTicker(symbol)
-      console.log(tickerData)
+      setPrice(tickerData?.last)
       setGlobal((prev) => {
-        return { ...prev, symbol }
+        return { ...prev, price: tickerData?.last }
       })
-
-      setTicker(tickerData)
     }
     getTickerData()
-  }, [symbol, setGlobal, setTicker])
+  }, [time, symbol, setGlobal])
 
-  //  更新幣價
-  useEffect(() => {
-    setPrice(ticker?.last)
-    setGlobal((prev) => {
-      return { ...prev, price: ticker?.last }
-    })
-  }, [ticker, setGlobal])
 
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {
@@ -103,6 +94,9 @@ function App() {
   // //選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
   const handleChangeSymbol = (_, value) => {
     setSymbol(value?.id)
+    setGlobal((prev) => {
+      return { ...prev, symbol: value?.id }
+    })
   }
 
   return (
@@ -115,9 +109,12 @@ function App() {
         <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">幣別:</span>
           <Autocomplete
+            // options={Object.values(markets).map((key) => {
+            //   const slashID = key['baseAsset'] + '/' + key['quoteAsset']
+            //   return { id: slashID, key }
+            // })}
             options={Object.values(markets).map((key) => {
-              const slashID = key['baseAsset'] + '/' + key['quoteAsset']
-              return { id: slashID, key }
+              return { id: key, key }
             })}
             classes={useSelectStyles()}
             getOptionLabel={(option) => option.id}
