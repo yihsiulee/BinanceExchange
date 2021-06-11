@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useContext } from 'react'
 import moment from 'moment'
 import { GlobalContext } from '../context'
-import { getServerTime } from '../api'
+import { getServerTime, getTicker } from '../api'
 
 const Period = () => {
   const [global, setGlobal] = useContext(GlobalContext)
@@ -15,6 +15,8 @@ const Period = () => {
         time: timeData['serverTime'], // 更新時間
       }
     })
+
+
   }, [])
 
   // 定時打API

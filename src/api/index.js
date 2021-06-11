@@ -40,14 +40,14 @@ export const getExchangeTime = () => {
 }
 
 //為了獲取交易最低單位
-export const getMarketsForLim = () => {
+export const getMarkets = () => {
   return binance_exchange.fetchMarkets()
 }
 
-export const getMarkets = () => {
-  return binance_exchange.fapiPublicGetExchangeInfo()
-  // return ftx_exchange.loadMarkets()
-}
+// export const getMarkets = () => {
+//   return binance_exchange.fapiPublicGetExchangeInfo()
+//   // return ftx_exchange.loadMarkets()
+// }
 
 //獲取交易對數據
 export const getTicker = (symbol) => {
