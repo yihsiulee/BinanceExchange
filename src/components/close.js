@@ -70,7 +70,7 @@ const Close = () => {
         }
         console.log((inputValueStopLoss/leverage),stopPrice)
         console.log("symbol:", symbol, "side:", side, "amount:", Math.abs(p.positionAmt), "stopPrice:", stopPrice)
-        marketStopLoss(symbol, side, Math.abs(p.positionAmt), stopPrice)
+        // marketStopLoss(symbol, side, Math.abs(p.positionAmt), stopPrice)
       })
 
   }

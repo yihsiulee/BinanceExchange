@@ -99,28 +99,17 @@ export const marketOrder = (symbol, side, amount) => {
   // })
 }
 
-export const marketStopLoss = async (symbol, side, amount, stopPrice) => {
-  // console.log("pppp",stopPrice)
-  // return binance_exchange.createOrder({
-  //     symbol:'DOGEUSDT', 
-  //     type:"STOP_MARKET", 
-  //     side:side, 
-  //     amount:amount,
-  //     // price: none,
-  //     //params, stopPrice:觸發價格
-  //     params:{'stopPrice': 0.27375}
-  //   })
-  // let params = {
-  //   'stopPrice': 0.27375, // your stop price
-  // }
+export const marketStopLoss = async (symbol, side, amount, price = null, stopPrice) => {
+
   return binance_exchange.createOrder(
     symbol, 
     "STOP_MARKET",
     side, 
     amount,
     //params, stopPrice:觸發價格
+    price,
     {
-      'stopPrice': 0.27375, // your stop price
+      'stopPrice': stopPrice, // your stop price
     }
   )
 
