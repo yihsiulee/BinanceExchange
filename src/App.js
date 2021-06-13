@@ -25,7 +25,7 @@ function App() {
   const time = symbol ? _.get(global, 'time', '') : '' // 獲取時間 (如果沒選幣別,不顯示時間)
   const [price, setPrice] = useState(0)
   const [minQty, setMinQty] = useState(0)
-
+  const [minTickerSize, setMinTickerSize] = useState(0)
   // console.log(getAllImplicitApiMethods())
 
   // 初始化拿到市場資料
@@ -36,6 +36,8 @@ function App() {
       const accountData = await getAccount()
 
       setMinQty(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> i.limits.amount.min))
+      setMinTickerSize(parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize))))
+      // console.log("gettt",parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize))))
       setMarkets(ccxtMarket.map((item)=>item.symbol))      
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setSlideValue(
@@ -59,7 +61,8 @@ function App() {
           ) ,
           time: timeData['serverTime'],
           //parseFloat 把陣列變成一個float值
-          minQty: parseFloat(Object.values(ccxtMarket).filter((item)=>item.symbol===symbol).map((i)=>  i.limits.amount.min))
+          minQty: parseFloat(Object.values(ccxtMarket).filter((item)=>item.symbol===symbol).map((i)=>  i.limits.amount.min)),
+          minTickerSize: parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize)))
         }
       })
     }
@@ -67,7 +70,7 @@ function App() {
     init()
 
   }, [symbol])  //換symbol時,要更新leverage,更新MinQty
-  console.log("AppGlo:",global)
+  // console.log("AppGlo:",global)
   // 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
     const getTickerData = async () => {
