@@ -79,17 +79,17 @@ export const getAccount = () => {
 
 //改變槓桿值
 export const changeLeverage = (userSymbol, userLeverage) => {
-  binance_exchange.fapiPrivatePostLeverage({
-    symbol: userSymbol,
-    leverage: userLeverage,
-  })
+  return binance_exchange.fapiPrivatePostLeverage({
+            symbol: userSymbol,
+            leverage: userLeverage,
+          })
 }
 
 //市價買賣單
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
 export const marketOrder = (symbol, side, amount) => {
-  binance_exchange.createOrder(symbol, 'market', side, amount)
+  return binance_exchange.createOrder(symbol, 'market', side, amount)
   // binance_exchange.fapiPrivatePostOrder({
   //   "symbol":"BTCUSDT",
   //   "side":"BUY",
@@ -97,6 +97,37 @@ export const marketOrder = (symbol, side, amount) => {
   //   "quantity":"0.0003",
   //   "timestamp": "1623063206357"
   // })
+}
+
+export const marketStopLoss = async (symbol, side, amount, price = null, stopPrice) => {
+
+  return binance_exchange.createOrder(
+    symbol, 
+    "STOP_MARKET",
+    side, 
+    amount,
+    //params, stopPrice:觸發價格
+    price,
+    {
+      'stopPrice': stopPrice, // your stop price
+    }
+  )
+
+}
+
+export const trailingStop = (symbol, side, amount, price, stopPrice, callbackRate) => {
+  return binance_exchange.createOrder(
+      symbol, 
+      'TRAILING_STOP_MARKET', 
+      side, 
+      amount, 
+      price, 
+      //params, stopPrice:觸發價格, callbackRate:回調率
+      // params= {
+      //   'stopPrice': stopPrice,
+      //   'callbackRate': callbackRate
+      //   }
+    )
 }
 
 //取得交易資料
