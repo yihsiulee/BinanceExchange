@@ -8,38 +8,34 @@ import FormControl from '@material-ui/core/FormControl'
 import FormLabel from '@material-ui/core/FormLabel'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { getBalance, marketOrder } from '../api'
-import _, { set } from 'lodash'
 import { GlobalContext } from '../context'
-import Decimal from 'decimal.js'
-import bigInt from 'big-integer'
 const Open = () => {
-  const [time, setTime] = useState()
+  const [, setTime] = useState()
   const [side, setSide] = useState('buy')
   const [inputValue, setInpuValue] = useState('')
-  const [balance, setBalance] = useState({})
+  const [, setBalance] = useState({})
   const [availableBalance, setAvailableBalance] = useState(0)
   const [leverage, setLeverage] = useState(1)
   const [global] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
   const [symbol, setSymbol] = useState('')
   const [minQty, setMinQty] = useState(0)
- 
 
-  
   useEffect(() => {
     const getBalanceData = async () => {
       const balanceData = await getBalance()
       setBalance(balanceData)
       //取得可用資金
-      console.log("balance",parseFloat(Object.values(balanceData).filter((item)=>item.asset==='USDT').map((b)=> b.availableBalance)))
-      setAvailableBalance(parseFloat(Object.values(balanceData).filter((item)=>item.asset==='USDT').map((b)=> b.availableBalance)))
+      // setAvailableBalance(
+      //   parseFloat(
+      //     Object.values(balanceData)
+      //       .filter((item) => item.asset === 'USDT')
+      //       .map((b) => b?.availableBalance)
+      //   )
+      // )
     }
     getBalanceData()
   }, [])
-  // console.log('balance:',balance)
-  // console.log(availableBalance)
-  // console.log("glo:",global)
-
 
   //取得槓桿
   useEffect(() => {
@@ -66,16 +62,28 @@ const Open = () => {
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
-    console.log("symbol:",symbol,
-    '多空:', side, 
-    '幾趴:', inputValue ,
-    "買入數量:",parseFloat(
-      Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) / minQty) * minQty ),
-    "availableBalance",availableBalance,"leverage",leverage,"price",price,"inputValue",inputValue)
+    console.log(
+      'symbol:',
+      symbol,
+      '多空:',
+      side,
+      '幾趴:',
+      inputValue,
+      '買入數量:',
+      parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty),
+      'availableBalance',
+      availableBalance,
+      'leverage',
+      leverage,
+      'price',
+      price,
+      'inputValue',
+      inputValue
+    )
     marketOrder(
-      symbol, 
-      side, 
-      parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) / minQty) * minQty)
+      symbol,
+      side,
+      parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
     )
   }
 
@@ -130,18 +138,15 @@ const Open = () => {
         <span className="text-white text-lg mr-5 font-bold">
           可買入數量:{((availableBalance * leverage) / price) * (inputValue / 100)}
         </span>
-          
-        <span className="text-white text-lg mr-5 font-bold">
-          最低買入單位:{minQty?minQty:0}
-        </span>
-        
+
+        <span className="text-white text-lg mr-5 font-bold">最低買入單位:{minQty ? minQty : 0}</span>
       </div>
 
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
-          實際買入數量:{parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) / minQty) * minQty)}
-          </span>
-        
+          實際買入數量:
+          {parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)}
+        </span>
       </div>
 
       <div className="flex items-center">
