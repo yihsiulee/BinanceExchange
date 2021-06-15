@@ -60,8 +60,7 @@ function App() {
 
     const init = async () => {
       const ccxtMarket = await getMarkets(firstUserExchange)
-      const timeData = await getServerTime(firstUserExchange)
-      const accountData = await getAccount(firstUserExchange)
+      // const timeData = await getServerTime(firstUserExchange)
 
       setMinQty(ccxtMarket.filter((item) => item.symbol === symbol).map((i) => i.limits.amount.min))
       setMinTickerSize(
@@ -76,26 +75,11 @@ function App() {
         )
       )
       setMarkets(ccxtMarket.map((item) => item.symbol))
-      setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
-      setSlideValue(
-        parseInt(
-          Object.values(accountData.positions)
-            .filter((item) => item.symbol === symbol?.replace('/', '')) //拿掉斜線 不用動
-            .map((l) => l.leverage)
-        )
-      )
+      
       setGlobal((prev) => {
         return {
           ...prev,
-          leverage: parseInt(
-            Object.values(accountData.positions)
-              .filter((item) => item.symbol === symbol?.replace('/', ''))
-              .map((l) => l.leverage)
-          ),
-          position: Object.values(accountData.positions).filter(
-            (item) => Math.abs(item.positionAmt) > 0 //絕對值
-          ),
-          time: timeData['serverTime'],
+          // time: timeData['serverTime'],
           //parseFloat 把陣列變成一個float值
           minQty: parseFloat(
             Object.values(ccxtMarket)
@@ -110,8 +94,7 @@ function App() {
                   .filter((j) => j.filterType === 'PRICE_FILTER')
                   .map((k) => k.tickSize)
               )
-          ),
-          account: accountData
+          )
 
         }
       })
@@ -120,17 +103,42 @@ function App() {
     init()
   }, [symbol, firstUserExchange]) //換symbol時,要更新leverage,更新MinQty
 
-  // 當幣別symbol改變時,拿幣的ticker,更新幣價
+  //  需要定期更新項目 ＆ 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
-    const getTickerData = async () => {
+    const refresh = async () => {
       const tickerData = await getTicker(symbol,firstUserExchange)
-      setPrice(tickerData?.last)
-      setGlobal((prev) => {
-        return { ...prev, price: tickerData?.last }
-      })
+      const accountData = await getAccount(firstUserExchange)
+      if(accountData!==undefined){
+
+        setPrice(tickerData?.last)
+        setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
+        setSlideValue(
+          parseInt(
+            Object.values(accountData.positions)
+              .filter((item) => item.symbol === symbol?.replace('/', '')) //拿掉斜線 不用動
+              .map((l) => l.leverage)
+          )
+        )
+  
+        setGlobal((prev) => {
+          return {
+             ...prev, 
+             price: tickerData?.last,
+             account: accountData,
+             leverage: parseInt(
+              Object.values(accountData.positions)
+                .filter((item) => item.symbol === symbol?.replace('/', ''))
+                .map((l) => l.leverage)
+            ),
+            position: Object.values(accountData.positions).filter(
+              (item) => Math.abs(item.positionAmt) > 0 //絕對值
+            ),
+            }
+        })
+      }
     }
-    getTickerData()
-  }, [time, symbol, setGlobal])
+    refresh()
+  }, [time, symbol, setGlobal, firstUserExchange])
 
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {

@@ -7,10 +7,13 @@ import FormControlLabel from '@material-ui/core/FormControlLabel'
 import FormControl from '@material-ui/core/FormControl'
 import FormLabel from '@material-ui/core/FormLabel'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { getBalance, marketOrder } from '../api'
+import { getBalance, openMarketOrder } from '../api'
 import { GlobalContext } from '../context'
+import _ from 'lodash'
+
+
 const Open = () => {
-  const [, setTime] = useState()
+  const [time, setTime] = useState()
   const [side, setSide] = useState('buy')
   const [inputValue, setInpuValue] = useState('')
   const [, setBalance] = useState({})
@@ -20,22 +23,26 @@ const Open = () => {
   const [price, setPrice] = useState(0)
   const [symbol, setSymbol] = useState('')
   const [minQty, setMinQty] = useState(0)
+  const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
   useEffect(() => {
     const getBalanceData = async () => {
-      const balanceData = await getBalance()
-      setBalance(balanceData)
-      //取得可用資金
-      // setAvailableBalance(
-      //   parseFloat(
-      //     Object.values(balanceData)
-      //       .filter((item) => item.asset === 'USDT')
-      //       .map((b) => b?.availableBalance)
-      //   )
-      // )
+      const balanceData = await getBalance(firstUserExchange)
+
+      if(balanceData!==undefined){
+        setBalance(balanceData)
+        //取得可用資金
+        setAvailableBalance(
+          parseFloat(
+            Object.values(balanceData)
+              .filter((item) => item.asset === 'USDT')
+              .map((b) => b?.availableBalance)
+          )
+        )
+      }
     }
     getBalanceData()
-  }, [])
+  }, [time])
 
   //取得槓桿
   useEffect(() => {
@@ -81,7 +88,8 @@ const Open = () => {
       'inputValue',
       inputValue
     )
-    marketOrder(
+    openMarketOrder(
+      firstUserExchange,
       symbol,
       side,
       parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
