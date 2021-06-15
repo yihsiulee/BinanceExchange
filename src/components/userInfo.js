@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useContext } from 'react'
 import { getIncome, getPosition, getAccount, getMarkets, getAllImplicitApiMethods, getTrades } from '../api'
 import { GlobalContext } from '../context'
+
 import { StyledTableCell } from '../styles'
 import _ from 'lodash'
 import { makeStyles } from '@material-ui/core/styles'
@@ -26,19 +28,19 @@ const useStyles = makeStyles({
 const UserInfo = () => {
   const [global] = useContext(GlobalContext)
   const [balance, setBalance] = useState()
-  const [, setPosition] = useState()
   const [account, setAccount] = useState({})
   const [, setMarket] = useState({})
+
   const [trades, setTrades] = useState({})
   const [incomeDay, setIncomeDay] = useState({}) // 近24小時獲利
   const [incomeWeek, setIncomeWeek] = useState({}) // 近7日獲利
+
 
   useEffect(() => {
     const getAccountData = async () => {
       const accountData = await getAccount()
       // const test = await getAllImplicitApiMethods()
       // console.log(accountData)
-
 
       // console.log(test)
       setAccount(accountData)
@@ -114,11 +116,13 @@ const UserInfo = () => {
             <StyledTableCell>{_.get(account, 'result.username', 0)}</StyledTableCell>
             <StyledTableCell align="right">{_.get(account, 'totalMarginBalance', 0)}</StyledTableCell>
             <StyledTableCell align="right">{_.get(account, 'availableBalance', 0)}</StyledTableCell>
+
             <StyledTableCell align="right">{_.get(account, 'totalInitialMargin', 0)}</StyledTableCell>
             <StyledTableCell align="right">{(_.get(account, 'totalInitialMargin', 0) / _.get(account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
             <StyledTableCell align="right">{_.get(account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
             <StyledTableCell align="right">{incomeDay.toString()}</StyledTableCell>
             <StyledTableCell align="right">{incomeWeek.toString()}</StyledTableCell>
+
           </TableRow>
           {/* ))} */}
         </TableBody>

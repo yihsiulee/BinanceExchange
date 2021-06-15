@@ -3,8 +3,8 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { marketOrder, marketStopLoss, trailingStop } from '../api'
-import _, { set } from 'lodash'
+import { marketOrder } from '../api'
+import _ from 'lodash'
 
 const Close = () => {
   const [global] = useContext(GlobalContext)
@@ -16,6 +16,7 @@ const Close = () => {
   const [minQty, setMinQty] = useState(0)
   const [price, setPrice] = useState(0)
   const [minTickerSize, setMinTickerSize] = useState(0)
+  const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
   //初始化拿position
   useEffect(() => {
@@ -32,28 +33,34 @@ const Close = () => {
   //一鍵平倉 func 優化:運算可以拿去period
   const sellAll = () => {
     Object.values(position)
-      .filter((item) => Math.abs(item.positionAmt)> 0)
+      .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
         console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
         let side = ''
         //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
-        if (p.positionAmt > 0 ) {
+        if (p.positionAmt > 0) {
           side = 'sell'
         }
         if (p.positionAmt < 0) {
           side = 'buy'
         }
-        marketOrder(symbol, side, Math.floor(  Math.abs(p.positionAmt) * (inputValueSellAll / 100) / minQty ) * minQty)
+        marketOrder(
+          firstUserExchange,
+          symbol,
+          side,
+          Math.floor((Math.abs(p.positionAmt) * (inputValueSellAll / 100)) / minQty) * minQty
+        )
+        return true
       })
   }
 
   const stopLoss = () => {
     Object.values(position)
-      .filter((item) => Math.abs(item.positionAmt)> 0)
+      .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
         let side = ''
         //倉位數量大於0,止損side則設為sell，反之則相反
-        if (p.positionAmt > 0 ) {
+        if (p.positionAmt > 0) {
           side = 'sell'
         }
         if (p.positionAmt < 0) {
@@ -61,18 +68,26 @@ const Close = () => {
         }
 
         let stopPrice = 0
-        if (side==="sell"){
-          stopPrice = parseFloat((((100-parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed((minTickerSize.toString().length)-2))
+        if (side === 'sell') {
+          stopPrice = parseFloat(
+            (((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
+              minTickerSize.toString().length - 2
+            )
+          )
         }
-        if (side==="buy"){
-          stopPrice = parseFloat((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed((minTickerSize.toString().length)-2))
+        if (side === 'buy') {
+          stopPrice = parseFloat(
+            (((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
+              minTickerSize.toString().length - 2
+            )
+          )
           // stopPrice = (Math.floor((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price)/minTickerSize)*minTickerSize)
         }
-        console.log((inputValueStopLoss/leverage),stopPrice)
-        console.log("symbol:", symbol, "side:", side, "amount:", Math.abs(p.positionAmt), "stopPrice:", stopPrice)
-        // marketStopLoss(symbol, side, Math.abs(p.positionAmt), stopPrice)
+        console.log(inputValueStopLoss / leverage, stopPrice)
+        console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
+        // marketStopLoss(binance_exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
+        return true
       })
-
   }
 
   const handleChangeInputSellAll = (event) => {
@@ -110,16 +125,15 @@ const Close = () => {
         />
       </div>
       <div className="flex items-center">
-      {
-       symbol?
-        <Button onClick={stopLoss} size="small" variant="contained" color="primary">
-          confirm
-        </Button>
-        :
-        <Button disabled onClick={stopLoss} size="small" variant="contained" color="primary">
-          confirm
-        </Button>
-      }
+        {symbol ? (
+          <Button onClick={stopLoss} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        ) : (
+          <Button disabled onClick={stopLoss} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        )}
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">追蹤止盈%數:</span>
@@ -173,17 +187,15 @@ const Close = () => {
         />
       </div>
       <div className="flex items-center">
-
-       {
-       symbol?
-       <Button onClick={sellAll} size="small" variant="contained" color="primary">
-          confirm
-        </Button>
-        :
-        <Button disabled onClick={sellAll} size="small" variant="contained" color="primary">
-          confirm
-        </Button>
-        }
+        {symbol ? (
+          <Button onClick={sellAll} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        ) : (
+          <Button disabled onClick={sellAll} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        )}
       </div>
     </div>
   )

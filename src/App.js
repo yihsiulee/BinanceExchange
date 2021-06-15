@@ -1,44 +1,81 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, getAllImplicitApiMethods, changeLeverage } from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, changeLeverage, initBinanceExchange } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import moment from 'moment'
 import Open from './components/open'
 import Close from './components/close'
-import User from './components/user'
-import UserInfo from './components/userInfo'
+// import User from './components/user'
+// import UserInfo from './components/userInfo'
 import Typography from '@material-ui/core/Typography'
 import Slider from '@material-ui/core/Slider'
 import _ from 'lodash'
 import { GlobalContext } from './context'
 import { LEVERAGEMARKS } from './constants'
 import Period from './components/period'
+import {
+  REACT_APP_USER1_APIKEY,
+  REACT_APP_USER1_SECRET,
+  REACT_APP_USER2_APIKEY,
+  REACT_APP_USER2_SECRET,
+} from './config'
 
 function App() {
   const [markets, setMarkets] = useState({}) // 市場上所有的幣別
   const [symbol, setSymbol] = useState('') // symbol代表幣別 e.g. ETH/BTC, LTC/BTC
   const [slideValue, setSlideValue] = useState(1)
-  const [position, setPosition] = useState({})
+  const [, setPosition] = useState({})
   const [global, setGlobal] = useContext(GlobalContext)
   const time = symbol ? _.get(global, 'time', '') : '' // 獲取時間 (如果沒選幣別,不顯示時間)
   const [price, setPrice] = useState(0)
-  const [minQty, setMinQty] = useState(0)
-  const [minTickerSize, setMinTickerSize] = useState(0)
-  // console.log(getAllImplicitApiMethods())
+  const [, setMinQty] = useState(0)
+  const [, setMinTickerSize] = useState(0)
+  const firstUserExchange = _.get(global, 'users[0].exchange', null)
+
+  const users = [
+    { id: 1, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
+    { id: 2, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+  ]
+  // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
+  useEffect(() => {
+    const init = async () => {
+      const exchanges = await Promise.all(
+        users.map(async (user) => {
+          return { id: user.id, exchange: initBinanceExchange(user) }
+        })
+      )
+      setGlobal((prev) => {
+        return { ...prev, users: exchanges }
+      })
+    }
+    init()
+  }, [])
 
   // 初始化拿到市場資料
   useEffect(() => {
-    const init = async () => {
-      const ccxtMarket = await getMarkets()
-      const timeData = await getServerTime()
-      const accountData = await getAccount()
+    // 如果第一個使用者是null時跳出
+    if (!firstUserExchange) return
 
-      setMinQty(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> i.limits.amount.min))
-      setMinTickerSize(parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize))))
-      // console.log("gettt",parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize))))
-      setMarkets(ccxtMarket.map((item)=>item.symbol))      
+    const init = async () => {
+      const ccxtMarket = await getMarkets(firstUserExchange)
+      const timeData = await getServerTime(firstUserExchange)
+      const accountData = await getAccount(firstUserExchange)
+
+      setMinQty(ccxtMarket.filter((item) => item.symbol === symbol).map((i) => i.limits.amount.min))
+      setMinTickerSize(
+        parseFloat(
+          ccxtMarket
+            .filter((item) => item.symbol === symbol)
+            .map((i) =>
+              Object.values(i.info.filters)
+                .filter((j) => j.filterType === 'PRICE_FILTER')
+                .map((k) => k.tickSize)
+            )
+        )
+      )
+      setMarkets(ccxtMarket.map((item) => item.symbol))
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setSlideValue(
         parseInt(
@@ -55,26 +92,36 @@ function App() {
               .filter((item) => item.symbol === symbol?.replace('/', ''))
               .map((l) => l.leverage)
           ),
-          position: 
-            Object.values(accountData.positions)
-              .filter((item) => ( Math.abs(item.positionAmt) > 0 ) //絕對值
-          ) ,
+          position: Object.values(accountData.positions).filter(
+            (item) => Math.abs(item.positionAmt) > 0 //絕對值
+          ),
           time: timeData['serverTime'],
           //parseFloat 把陣列變成一個float值
-          minQty: parseFloat(Object.values(ccxtMarket).filter((item)=>item.symbol===symbol).map((i)=>  i.limits.amount.min)),
-          minTickerSize: parseFloat(ccxtMarket.filter((item)=>item.symbol===symbol).map((i)=> Object.values(i.info.filters).filter((j)=>j.filterType==="PRICE_FILTER").map((k)=>k.tickSize)))
+          minQty: parseFloat(
+            Object.values(ccxtMarket)
+              .filter((item) => item.symbol === symbol)
+              .map((i) => i.limits.amount.min)
+          ),
+          minTickerSize: parseFloat(
+            ccxtMarket
+              .filter((item) => item.symbol === symbol)
+              .map((i) =>
+                Object.values(i.info.filters)
+                  .filter((j) => j.filterType === 'PRICE_FILTER')
+                  .map((k) => k.tickSize)
+              )
+          ),
         }
       })
     }
 
     init()
+  }, [symbol, firstUserExchange]) //換symbol時,要更新leverage,更新MinQty
 
-  }, [symbol])  //換symbol時,要更新leverage,更新MinQty
-  // console.log("AppGlo:",global)
   // 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
     const getTickerData = async () => {
-      const tickerData = await getTicker(symbol)
+      const tickerData = await getTicker(symbol,firstUserExchange)
       setPrice(tickerData?.last)
       setGlobal((prev) => {
         return { ...prev, price: tickerData?.last }
@@ -83,15 +130,17 @@ function App() {
     getTickerData()
   }, [time, symbol, setGlobal])
 
-
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {
+    // 如果user exchange是null時跳出
+    if (!firstUserExchange) return
+
     setSlideValue(newValue)
     setGlobal((prev) => {
       return { ...prev, leverage: newValue }
     })
     // 此comment勿刪除 之後會要用
-    changeLeverage(symbol.replace('/', ''), newValue)
+    changeLeverage(firstUserExchange, symbol.replace('/', ''), newValue)
   }
 
   // //選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
