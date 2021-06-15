@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react'
+ import React, { useEffect, useState, useContext } from 'react'
 import { InputTextField } from '../styles'
 import Button from '@material-ui/core/Button'
 import Radio from '@material-ui/core/Radio'
@@ -72,11 +72,14 @@ const Open = () => {
     "買入數量:",parseFloat(
       Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) / minQty) * minQty ),
     "availableBalance",availableBalance,"leverage",leverage,"price",price,"inputValue",inputValue)
-    marketOrder(
+
+    const response = marketOrder(
       symbol, 
       side, 
       parseFloat(Math.floor(((availableBalance * leverage) / price) * (inputValue / 100) / minQty) * minQty)
     )
+
+    console.log(response)
   }
 
   return (

@@ -88,7 +88,8 @@ export const changeLeverage = (userSymbol, userLeverage) => {
 //市價買賣單
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
-export const marketOrder = (symbol, side, amount) => {
+export const marketOrder = async (symbol, side, amount) => {
+  
   return binance_exchange.createOrder(symbol, 'market', side, amount)
   // binance_exchange.fapiPrivatePostOrder({
   //   "symbol":"BTCUSDT",

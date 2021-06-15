@@ -181,7 +181,7 @@ function App() {
         {/* user顯示 */}
         {/* <User /> */}
 
-        {/* <UserInfo /> */}
+        <UserInfo />
 
         {/* 定時Call API */}
         <Period />
