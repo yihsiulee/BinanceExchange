@@ -6,6 +6,12 @@ export const initBinanceExchange = (user) => {
     secret: user.secret,
     timeout: 15000,
     enableRateLimit: true,
+    options: {
+      adjustForTimeDifference: true,
+      verbose: true, // if needed, not mandatory
+      recvWindow: 10000000, // not really needed
+      defaultType: 'future', //預設合約市場
+    },
   })
 }
 
@@ -28,10 +34,10 @@ export const getMarkets = (binance_exchange) => {
 }
 
 //獲取交易對數據
-export const getTicker = (symbol) => {
-  if (!symbol) return
+export const getTicker = (symbol, binance_exchange) => {
+  if (!binance_exchange) return
   // return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol}) //這隻的symbol不用slash(/)
-  // return binance_exchange.fetch_ticker(symbol) // 這隻要slash
+  return binance_exchange.fetch_ticker(symbol) // 這隻要slash
 }
 
 export const getIncome = (binance_exchange) => {

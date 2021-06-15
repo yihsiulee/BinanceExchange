@@ -121,7 +121,7 @@ function App() {
   // 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
     const getTickerData = async () => {
-      const tickerData = await getTicker(symbol)
+      const tickerData = await getTicker(symbol,firstUserExchange)
       setPrice(tickerData?.last)
       setGlobal((prev) => {
         return { ...prev, price: tickerData?.last }
