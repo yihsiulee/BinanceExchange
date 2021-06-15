@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { marketOrder } from '../api'
+import { closeMarketOrder, marketStopLoss, cancelAllOrder} from '../api'
 import _ from 'lodash'
 
 const Close = () => {
@@ -17,10 +17,11 @@ const Close = () => {
   const [price, setPrice] = useState(0)
   const [minTickerSize, setMinTickerSize] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
-
+  const [time, setTime] = useState(0)
   //初始化拿position
   useEffect(() => {
     // setPosition(_.get(global, 'position', 0))
+    setTime(global.time)
     setLeverage(global.leverage)
     setMinTickerSize(global.minTickerSize)
     setPrice(global.price)
@@ -44,7 +45,7 @@ const Close = () => {
         if (p.positionAmt < 0) {
           side = 'buy'
         }
-        marketOrder(
+        closeMarketOrder(
           firstUserExchange,
           symbol,
           side,
@@ -85,9 +86,13 @@ const Close = () => {
         }
         console.log(inputValueStopLoss / leverage, stopPrice)
         console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
-        // marketStopLoss(binance_exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
+        marketStopLoss(firstUserExchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
         return true
       })
+  }
+
+  const cancelOrder = () =>{
+    cancelAllOrder(symbol,time)
   }
 
   const handleChangeInputSellAll = (event) => {
@@ -167,6 +172,21 @@ const Close = () => {
         >
           confirm
         </Button>
+      </div>
+
+      <div className="flex items-center">
+        <span className="text-red-600 text-lg mr-5 font-bold">(還不能用)一鍵取消所有委託單:</span>
+      </div>
+      <div className="flex items-center">
+        {symbol ? (
+          <Button onClick={cancelOrder} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        ) : (
+          <Button disabled onClick={cancelOrder} size="small" variant="contained" color="primary">
+            confirm
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center">

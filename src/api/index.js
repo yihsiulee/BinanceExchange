@@ -35,7 +35,7 @@ export const getMarkets = (binance_exchange) => {
 
 //獲取交易對數據
 export const getTicker = (symbol, binance_exchange) => {
-  if (!binance_exchange) return
+  if (!binance_exchange || !symbol) return
   // return binance_exchange.fapiPublicGetTickerPrice({"symbol": symbol}) //這隻的symbol不用slash(/)
   return binance_exchange.fetch_ticker(symbol) // 這隻要slash
 }
@@ -54,6 +54,7 @@ export const getBalance = (binance_exchange) => {
 //查詢現在合約倉位資訊
 //binance 的fapiPrivateGetAccount裡面有position資訊
 export const getPosition = (binance_exchange) => {
+  if (!binance_exchange) return
   return binance_exchange.fetch_positions()
 }
 
@@ -76,12 +77,26 @@ export const changeLeverage = (binance_exchange, userSymbol, userLeverage) => {
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
 
-export const marketOrder = (binance_exchange, symbol, side, amount) => {
+//市價開倉
+export const openMarketOrder = (binance_exchange, symbol, side, amount) => {
   if (!binance_exchange) return
   return binance_exchange.createOrder(symbol, 'market', side, amount)
 }
 
-export const marketStopLoss = async (binance_exchange, symbol, side, amount, price = null, stopPrice) => {
+//市價平倉
+export const closeMarketOrder = (binance_exchange, symbol, side, amount) => {
+  if (!binance_exchange) return
+  // ccxt.binance.createOrder()
+  // createMarketOrder (symbol: string, side: Order['side'], amount: number, price?: number, params?: Params): Promise<Order>;
+  // return binance_exchange.createMarketOrder( symbol, side, amount, 0.3, {"reduceOnly":true} )
+  // return binance_exchange.createOrder(symbol, 'market', side, amount,{"reduceOnly":true})
+  //還沒修好 要加上reduce only
+  return binance_exchange.createOrder(symbol, 'market', side, amount, undefined, {"reduceOnly":true})
+}
+
+
+
+export const marketStopLoss = async (binance_exchange, symbol, side, amount,  stopPrice) => {
   if (!binance_exchange) return
   return binance_exchange.createOrder(
     symbol,
@@ -89,9 +104,10 @@ export const marketStopLoss = async (binance_exchange, symbol, side, amount, pri
     side,
     amount,
     //params, stopPrice:觸發價格
-    price,
+    undefined,
     {
-      stopPrice: stopPrice, // your stop price
+      "stopPrice": stopPrice, // your stop price 勿動 強制加上
+      "closePosition":true // 觸發後全部平倉，只平倉效果
     }
   )
 }
@@ -110,6 +126,14 @@ export const trailingStop = (binance_exchange, symbol, side, amount, price, stop
     //   'callbackRate': callbackRate
     //   }
   )
+}
+//取消全部委託單 不能用
+export const cancelAllOrder = (binance_exchange, symbol, timestamp) => {
+  if (!binance_exchange) return
+  return binance_exchange.fapiPrivateDeleteAllOpenOrders({
+    symbol: symbol,
+    timestamp: timestamp,
+  })
 }
 
 //取得交易資料
