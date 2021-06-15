@@ -2,12 +2,14 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
 import App from './App'
+import WSApp from './ws'
 import reportWebVitals from './reportWebVitals'
 import { StateProvider } from './context'
 
 ReactDOM.render(
   <StateProvider>
     <App />
+    {/* <WSApp/> */}
   </StateProvider>,
   document.getElementById('root')
 )

@@ -75,6 +75,7 @@ export const changeLeverage = (binance_exchange, userSymbol, userLeverage) => {
 //市價買賣單
 //amount 開的數量
 //(保證金*槓桿 )/ 現在的幣價  = 最大可開的數量，最大可開數量 乘上 你要的開倉輸入的%數 就是開倉數量(amount)
+
 export const marketOrder = (binance_exchange, symbol, side, amount) => {
   if (!binance_exchange) return
   return binance_exchange.createOrder(symbol, 'market', side, amount)

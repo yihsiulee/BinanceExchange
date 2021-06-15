@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react'
+ import React, { useEffect, useState, useContext } from 'react'
 import { InputTextField } from '../styles'
 import Button from '@material-ui/core/Button'
 import Radio from '@material-ui/core/Radio'
@@ -62,6 +62,7 @@ const Open = () => {
 
   const handleButtonClick = () => {
     //以下註解 console勿刪
+
     console.log(
       'symbol:',
       symbol,
@@ -84,7 +85,10 @@ const Open = () => {
       symbol,
       side,
       parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
+
     )
+
+    console.log(response)
   }
 
   return (

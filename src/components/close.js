@@ -104,11 +104,12 @@ const Close = () => {
         <span className="text-red-600 text-lg mr-5 font-bold">止盈/止損參數:</span>
       </div>
       <div className="flex items-center">
-        {/* <span className="text-white text-lg mr-5 font-bold">止損價格(持多倉/持空倉):
-        {parseFloat((((100-parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed((minTickerSize.toString().length)-2))}
+        <span className="text-white text-lg mr-5 font-bold">止損價格(持多倉/持空倉):
+        
+        {parseFloat((((100-parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
         /
-        {parseFloat((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed((minTickerSize.toString().length)-2))}
-        </span> */}
+        {parseFloat((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
+        </span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">止損%數:</span>
