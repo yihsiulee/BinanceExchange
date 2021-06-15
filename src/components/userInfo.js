@@ -29,28 +29,20 @@ const UserInfo = () => {
   const [global] = useContext(GlobalContext)
   const [balance, setBalance] = useState()
   const [account, setAccount] = useState({})
-  const [, setMarket] = useState({})
-
-  const [trades, setTrades] = useState({})
   const [incomeDay, setIncomeDay] = useState({}) // 近24小時獲利
   const [incomeWeek, setIncomeWeek] = useState({}) // 近7日獲利
+  const [time, setTime] = useState()
+  const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
 
   useEffect(() => {
-    const getAccountData = async () => {
-      const accountData = await getAccount()
-      // const test = await getAllImplicitApiMethods()
-      // console.log(accountData)
-
-      // console.log(test)
-      setAccount(accountData)
-    }
-    getAccountData()
+    setAccount(global.account)
+    setTime(global.time)
   }, [global])
 
   useEffect(() => {
     const getIncomeData = async () => {
-      const incomeData = await getIncome()
+      const incomeData = await getIncome(firstUserExchange)
 
       var total_income_day = 0
       var total_income_week = 0
@@ -74,7 +66,7 @@ const UserInfo = () => {
       setBalance(incomeData)
     }
     getIncomeData()
-  }, [global])
+  }, [time])
 
   // useEffect(() => {
   //   const getPositionData = async () => {
@@ -84,14 +76,6 @@ const UserInfo = () => {
   //   getPositionData()
   // }, [])
 
-  useEffect(() => {
-    const getTradesData = async () => {
-      const tradesData = await getTrades()
-      // console.log(tradesData)
-      setMarket(tradesData)
-    }
-    getTradesData()
-  }, [])
 
   const classes = useStyles()
 
