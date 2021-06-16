@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { closeMarketOrder, marketStopLoss, cancelAllOrder} from '../api'
+import { closeMarketOrder, marketStopLoss, cancelAllOrder, trailingStop} from '../api'
 import _ from 'lodash'
 
 const Close = () => {
@@ -18,6 +18,8 @@ const Close = () => {
   const [minTickerSize, setMinTickerSize] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
   const [time, setTime] = useState(0)
+  const [activationPercentage, setActivationPercentage] = useState(0)
+  const [callbackRate, setCallbackRate] = useState(0)
   //初始化拿position
   useEffect(() => {
     // setPosition(_.get(global, 'position', 0))
@@ -31,8 +33,8 @@ const Close = () => {
   }, [global])
   // console.log("close:",global)
 
-  //一鍵平倉 func 優化:運算可以拿去period
-  const sellAll = () => {
+  //一鍵市價平倉 func 優化:運算可以拿去period?
+  const sellAllOrder = () => {
     Object.values(position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
@@ -54,8 +56,8 @@ const Close = () => {
         return true
       })
   }
-
-  const stopLoss = () => {
+  //市價止損單
+  const stopLossOrder = () => {
     Object.values(position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
@@ -91,6 +93,42 @@ const Close = () => {
       })
   }
 
+  //追蹤止盈單
+  const trailingOrder = () => {
+    Object.values(position)
+      .filter((item) => Math.abs(item.positionAmt) > 0)
+      .map((p) => {
+        let side = ''
+        //倉位數量大於0,止損side則設為sell，反之則相反
+        if (p.positionAmt > 0) {
+          side = 'sell'
+        }
+        if (p.positionAmt < 0) {
+          side = 'buy'
+        }
+
+        let activationPrice = 0
+        if (side === 'sell') {
+          activationPrice = parseFloat(
+            (((100 + parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+              minTickerSize.toString().length - 2
+            )
+          )
+        }
+        if (side === 'buy') {
+          activationPrice = parseFloat(
+            (((100 - parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+              minTickerSize.toString().length - 2
+            )
+          )
+        }
+        console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
+        trailingStop(firstUserExchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
+        return true
+      })
+  }
+
+  //not okay
   const cancelOrder = () =>{
     cancelAllOrder(symbol,time)
   }
@@ -101,6 +139,14 @@ const Close = () => {
 
   const handleChangeInputStopLoss = (event) => {
     setInputValueStopLoss(parseInt(event.target.value))
+  }
+
+  const handleChangeInputAcPercentage = (event) => {
+    setActivationPercentage(parseInt(event.target.value))
+  }
+
+  const handleChangeInputCallbackRate = (event) => {
+    setCallbackRate(parseInt(event.target.value))
   }
 
   return (
@@ -131,47 +177,71 @@ const Close = () => {
       </div>
       <div className="flex items-center">
         {symbol ? (
-          <Button onClick={stopLoss} size="small" variant="contained" color="primary">
+          <Button onClick={stopLossOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         ) : (
-          <Button disabled onClick={stopLoss} size="small" variant="contained" color="primary">
+          <Button disabled onClick={stopLossOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         )}
       </div>
+
       <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">追蹤止盈%數:</span>
+        <span className="text-white text-lg mr-5 font-bold">追蹤止盈:</span>
+      </div>
+      <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">目標價格(持多倉/持空倉):
+        {parseFloat(
+            (((100 + parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+              !minTickerSize ? 0 : minTickerSize.toString().length-2
+            )
+          )}
+        /
+        {parseFloat(
+            (((100 - parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+              !minTickerSize ? 0 : minTickerSize.toString().length-2
+            )
+          )}
+        </span>
+      </div>
+      <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">目標%數:{activationPercentage}</span>
         <InputTextField
           label="目標%數"
           variant="outlined"
           color="primary"
           size="small"
-          InputProps={{
-            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-          }}
-        />
-        <InputTextField
-          label="追蹤%數"
-          variant="outlined"
-          color="primary"
-          size="small"
+          onChange={handleChangeInputAcPercentage}
           InputProps={{
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
           }}
         />
       </div>
       <div className="flex items-center">
-        <Button
-          onClick={() => {
-            alert('comfirm 平倉參數')
-          }}
-          size="small"
-          variant="contained"
+        <span className="text-white text-lg mr-5 font-bold">追蹤%數(輸入0.1-5):{callbackRate}</span>
+        <InputTextField
+          label="追蹤%數"
+          variant="outlined"
           color="primary"
-        >
-          confirm
+          size="small"
+          onChange={handleChangeInputCallbackRate}
+          InputProps={{
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+          }}
+        />
+      </div>
+
+      <div className="flex items-center">
+      {symbol ? (
+        <Button onClick={trailingOrder} size="small" variant="contained" color="primary">
+          確認追蹤止盈
         </Button>
+        ) : (
+        <Button disabled onClick={trailingOrder} size="small" variant="contained" color="primary">
+          確認追蹤止盈
+        </Button>
+        )}
       </div>
 
       <div className="flex items-center">
@@ -208,11 +278,11 @@ const Close = () => {
       </div>
       <div className="flex items-center">
         {symbol ? (
-          <Button onClick={sellAll} size="small" variant="contained" color="primary">
+          <Button onClick={sellAllOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         ) : (
-          <Button disabled onClick={sellAll} size="small" variant="contained" color="primary">
+          <Button disabled onClick={sellAllOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         )}
