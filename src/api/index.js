@@ -95,7 +95,7 @@ export const closeMarketOrder = (binance_exchange, symbol, side, amount) => {
 }
 
 
-
+//市價止損單
 export const marketStopLoss = async (binance_exchange, symbol, side, amount,  stopPrice) => {
   if (!binance_exchange) return
   return binance_exchange.createOrder(
@@ -112,19 +112,19 @@ export const marketStopLoss = async (binance_exchange, symbol, side, amount,  st
   )
 }
 
-export const trailingStop = (binance_exchange, symbol, side, amount, price, stopPrice, callbackRate) => {
+export const trailingStop = (binance_exchange, symbol, side, amount, activationPrice, callbackRate) => {
   if (!binance_exchange) return
   return binance_exchange.createOrder(
     symbol,
     'TRAILING_STOP_MARKET',
     side,
     amount,
-    price
+    undefined,
     //params, stopPrice:觸發價格, callbackRate:回調率
-    // params= {
-    //   'stopPrice': stopPrice,
-    //   'callbackRate': callbackRate
-    //   }
+    {
+      'activationPrice': activationPrice,
+      'callbackRate': callbackRate
+      }
   )
 }
 //取消全部委託單 不能用
