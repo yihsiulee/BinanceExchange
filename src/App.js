@@ -138,7 +138,7 @@ function App() {
       }
     }
     refresh()
-  }, [time, symbol, setGlobal, firstUserExchange])
+  }, [time, symbol, firstUserExchange])
 
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {

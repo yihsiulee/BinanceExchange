@@ -21,7 +21,7 @@ const Period = () => {
   }, [global, firstUserExchange])
 
   // 定時打API
-  const INTERVAL_TIME = 3000 // 間隔時間
+  const INTERVAL_TIME = 1000 // 間隔時間
   useEffect(() => {
     const intervalId = setInterval(() => {
       callAPI()
