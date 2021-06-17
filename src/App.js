@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getAccount, getServerTime, changeLeverage, initBinanceExchange } from './api'
+import { getMarkets, getTicker, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -28,19 +28,77 @@ function App() {
   const [slideValue, setSlideValue] = useState(1)
   const [, setPosition] = useState({})
   const [global, setGlobal] = useContext(GlobalContext)
-  const time = symbol ? _.get(global, 'time', '') : '' // 獲取時間 (如果沒選幣別,不顯示時間)
+  // const time = symbol ? _.get(global, 'time', '') : '' // 獲取時間 (如果沒選幣別,不顯示時間)
+  const [wsKey, setWsKey] = useState(0)
+  const [time, setTime] = useState(0)
   const [price, setPrice] = useState(0)
   const [, setMinQty] = useState(0)
   const [, setMinTickerSize] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
+  const [allTicker, setAllTicker] = useState(0)
+
 
   const users = [
     { id: 1, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
     { id: 2, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
+
+  // fetch TICKER data by WebSocket
+  // UI update while received data  
+  useEffect(() => {
+    const getWS = () => {
+      const client = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr');
+      client.onmessage = (message) => {
+        // var object = JSON.parse(message.data).filter((e)=> {return e.s ===  symbol?.replace('/', '')})
+
+        // console.log(message.data)
+        setAllTicker(JSON.parse(message.data))
+        // setAllTicker(message.data)
+      }
+    }
+    getWS()
+  }, [])
+
+  // UPDATE periodically
+  useEffect(() => {
+    const updateTickerInfo = () => {
+      Object.values(allTicker).map((element) => {
+        if (element.s === symbol?.replace('/', '')) {
+          // "e": "24hrMiniTicker",  // 事件类型
+          // "E": 123456789,         // 事件时间(毫秒)
+          // "s": "BNBUSDT",         // 交易对
+          // "c": "0.0025",          // 最新成交价格
+          // "o": "0.0010",          // 24小时前开始第一笔成交价格
+          // "h": "0.0025",          // 24小时内最高成交价
+          // "l": "0.0010",          // 24小时内最低成交价
+          // "v": "10000",           // 成交量
+          // "q": "18"               // 成交额
+          setPrice(element.c)
+          setTime(element.E)
+        }
+      })
+    }
+    updateTickerInfo()
+  }, [allTicker])
+
+
+  // UPDATE account data periodically
+  useEffect(() => {
+    const updateAccountData = () => {
+      const client = new WebSocket("wss://fstream.binance.com/ws/" + wsKey);
+      client.onmessage = (message) => {
+
+        console.log(message.data)
+      }
+    }
+    updateAccountData()
+  }, [time])
+
   // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
   useEffect(() => {
     const init = async () => {
+      const key = await getWebSocketKey({ user: users[0] })  //要移到init
+      setWsKey(key)
       const exchanges = await Promise.all(
         users.map(async (user) => {
           return { id: user.id, exchange: initBinanceExchange(user) }
@@ -52,6 +110,7 @@ function App() {
     }
     init()
   }, [])
+
 
   // 初始化拿到市場資料
   useEffect(() => {
@@ -75,7 +134,7 @@ function App() {
         )
       )
       setMarkets(ccxtMarket.map((item) => item.symbol))
-      
+
       setGlobal((prev) => {
         return {
           ...prev,
@@ -103,14 +162,15 @@ function App() {
     init()
   }, [symbol, firstUserExchange]) //換symbol時,要更新leverage,更新MinQty
 
+
   //  需要定期更新項目 ＆ 當幣別symbol改變時,拿幣的ticker,更新幣價
   useEffect(() => {
     const refresh = async () => {
-      const tickerData = await getTicker(symbol,firstUserExchange)
+      const tickerData = await getTicker(symbol, firstUserExchange)
       const accountData = await getAccount(firstUserExchange)
-      if(accountData!==undefined){
+      if (accountData !== undefined) {
 
-        setPrice(tickerData?.last)
+        // setPrice(tickerData?.last)
         setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
         setSlideValue(
           parseInt(
@@ -119,13 +179,13 @@ function App() {
               .map((l) => l.leverage)
           )
         )
-  
+
         setGlobal((prev) => {
           return {
-             ...prev, 
-             price: tickerData?.last,
-             account: accountData,
-             leverage: parseInt(
+            ...prev,
+            price: tickerData?.last,
+            account: accountData,
+            leverage: parseInt(
               Object.values(accountData.positions)
                 .filter((item) => item.symbol === symbol?.replace('/', ''))
                 .map((l) => l.leverage)
@@ -133,7 +193,7 @@ function App() {
             position: Object.values(accountData.positions).filter(
               (item) => Math.abs(item.positionAmt) > 0 //絕對值
             ),
-            }
+          }
         })
       }
     }

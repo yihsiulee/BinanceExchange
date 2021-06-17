@@ -9,7 +9,7 @@ const Period = () => {
 
   const callAPI = useCallback(async () => {
     // 更新global
-    console.log('global:', global)
+    // console.log('global:', global)
     const timeData = await getServerTime(firstUserExchange)
     // const account = await getAccount()
     setGlobal((prev) => {

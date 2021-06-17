@@ -39,7 +39,7 @@ const UserInfo = () => {
     setAccount(global.account)
     setTime(global.time)
   }, [global])
-
+  
   useEffect(() => {
     const getIncomeData = async () => {
       const incomeData = await getIncome(firstUserExchange)

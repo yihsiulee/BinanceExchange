@@ -220,7 +220,7 @@ const Close = () => {
             console.log("空單止損rrr")
       }
       else{
-        console.log("nothing happend")
+        // console.log("nothing happend")
       }
     }
   }
