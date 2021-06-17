@@ -59,7 +59,7 @@ function App() {
     getWS()
   }, [])
 
-  // UPDATE periodically
+  // UPDATE periodically 從all ticker資料拿出來篩
   useEffect(() => {
     const updateTickerInfo = () => {
       Object.values(allTicker).map((element) => {
@@ -75,6 +75,13 @@ function App() {
           // "q": "18"               // 成交额
           setPrice(element.c)
           setTime(element.E)
+          setGlobal((prev) => {
+            return {
+              ...prev,
+              price: element.c,
+              time: element.E
+            }
+          })
         }
       })
     }
@@ -82,7 +89,8 @@ function App() {
   }, [allTicker])
 
 
-  // UPDATE account data periodically
+  // UPDATE account data periodically 
+  // account data有變動時才會更新，所以要先用REST接一次資料下來
   useEffect(() => {
     const updateAccountData = () => {
       const client = new WebSocket("wss://fstream.binance.com/ws/" + wsKey);
@@ -112,7 +120,7 @@ function App() {
   }, [])
 
 
-  // 初始化拿到市場資料
+  // 初始化拿到市場資料 REST
   useEffect(() => {
     // 如果第一個使用者是null時跳出
     if (!firstUserExchange) return
@@ -183,7 +191,7 @@ function App() {
         setGlobal((prev) => {
           return {
             ...prev,
-            price: tickerData?.last,
+            // price: tickerData?.last,
             account: accountData,
             leverage: parseInt(
               Object.values(accountData.positions)
@@ -303,7 +311,7 @@ function App() {
         {/* <UserInfo /> */}
 
         {/* 定時Call API */}
-        <Period />
+        {/* <Period /> */}
       </div>
     </div>
   )
