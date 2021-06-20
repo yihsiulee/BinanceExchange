@@ -34,17 +34,18 @@ const Close = () => {
     setPosition(global.position)
     setSymbol(global.symbol)
     setMinQty(global.minQty)
-    // repeatSell()
   }, [global])
 
   useEffect(() => {
+    //如果沒設定repeat價格就跳出
+    if(repeatPrice==0) return
     repeatSell()
-  }, [time])
+  }, [price])
   // console.log("close:",global)
 
 
 
-  //一鍵市價平倉 func 優化:運算可以拿去period?
+  //一鍵市價平倉 func 
   const sellAllOrder = () => {
      Object.values(position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
@@ -167,7 +168,8 @@ const Close = () => {
             )
           )
         }
-        setRepeatSymbol(p.symbol)
+        
+        setRepeatSymbol(symbol)
         setRepeatSide(side)
         setRepeatPrice(stopPrice)
         return true
@@ -187,6 +189,7 @@ const Close = () => {
             // positionSymbol = p.symbol
           }
         )
+
     //持多倉狀況
       if(repeatSymbol===symbol && repeatSide === "sell" && repeatPrice > price){
             //有"只平倉"參數
@@ -220,7 +223,7 @@ const Close = () => {
             console.log("空單止損rrr")
       }
       else{
-        // console.log("nothing happend")
+        console.log("nothing happend")
       }
     }
   }

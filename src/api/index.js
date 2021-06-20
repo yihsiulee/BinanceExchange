@@ -87,11 +87,6 @@ export const openMarketOrder = (binance_exchange, symbol, side, amount) => {
 //市價平倉
 export const closeMarketOrder = (binance_exchange, symbol, side, amount) => {
   if (!binance_exchange) return
-  // ccxt.binance.createOrder()
-  // createMarketOrder (symbol: string, side: Order['side'], amount: number, price?: number, params?: Params): Promise<Order>;
-  // return binance_exchange.createMarketOrder( symbol, side, amount, 0.3, {"reduceOnly":true} )
-  // return binance_exchange.createOrder(symbol, 'market', side, amount,{"reduceOnly":true})
-  //還沒修好 要加上reduce only
   return binance_exchange.createOrder(symbol, 'market', side, amount, undefined, {"reduceOnly":true})
 }
 
