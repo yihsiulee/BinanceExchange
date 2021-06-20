@@ -10,13 +10,12 @@ import InputAdornment from '@material-ui/core/InputAdornment'
 import { getBalance, openMarketOrder } from '../api'
 import { GlobalContext } from '../context'
 import _ from 'lodash'
+import { promisify } from 'util'
 
 
 const Open = () => {
-  const [time, setTime] = useState()
   const [side, setSide] = useState('buy')
   const [inputValue, setInpuValue] = useState('')
-  const [, setBalance] = useState({})
   const [availableBalance, setAvailableBalance] = useState(0)
   const [leverage, setLeverage] = useState(1)
   const [global] = useContext(GlobalContext)
@@ -25,32 +24,15 @@ const Open = () => {
   const [minQty, setMinQty] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
-  useEffect(() => {
-    const getBalanceData = async () => {
-      const balanceData = await getBalance(firstUserExchange)
 
-      if(balanceData!==undefined){
-        setBalance(balanceData)
-        //取得可用資金
-        setAvailableBalance(
-          parseFloat(
-            Object.values(balanceData)
-              .filter((item) => item.asset === 'USDT')
-              .map((b) => b?.availableBalance)
-          )
-        )
-      }
-    }
-    getBalanceData()
-  }, [time])
 
   //取得槓桿
   useEffect(() => {
+    setAvailableBalance(global.availableBalance)
     setMinQty(global.minQty)
     setPrice(global.price)
     setLeverage(global.leverage)
     setSymbol(global.symbol)
-    setTime(global.time)
   }, [global])
 
   const handleChangeSelect = (event) => {
