@@ -24,6 +24,7 @@ const Close = () => {
   const [repeatPrice, setRepeatPrice] = useState(0)
   const [repeatSide, setRepeatSide] = useState('')
   const [repeatSymbol, setRepeatSymbol] = useState('')
+
   //初始化拿position
   useEffect(() => {
     // setPosition(_.get(global, 'position', 0))
@@ -31,7 +32,7 @@ const Close = () => {
     setLeverage(global.leverage)
     setMinTickerSize(global.minTickerSize)
     setPrice(global.price)
-    setPosition(global.position)
+    // setPosition(global.position)//要改
     setSymbol(global.symbol)
     setMinQty(global.minQty)
   }, [global])
@@ -47,102 +48,115 @@ const Close = () => {
 
   //一鍵市價平倉 func 
   const sellAllOrder = () => {
-     Object.values(position)
-      .filter((item) => Math.abs(item.positionAmt) > 0)
-      .map((p) => {
-        console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
-        let side = ''
-        //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
-        if (p.positionAmt > 0) {
-          side = 'sell'
-        }
-        if (p.positionAmt < 0) {
-          side = 'buy'
-        }
-        closeMarketOrder(
-          firstUserExchange,
-          symbol,
-          side,
-          Math.floor((Math.abs(p.positionAmt) * (inputValueSellAll / 100)) / minQty) * minQty
-        )
-        return true
-      })
+    if (!global.users) return
+    for (let user of global.users){
+      Object.values(user.position)
+       .filter((item) => Math.abs(item.positionAmt) > 0)
+       .map((p) => {
+         console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
+         let side = ''
+         //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
+         if (p.positionAmt > 0) {
+           side = 'sell'
+         }
+         if (p.positionAmt < 0) {
+           side = 'buy'
+         }
+         closeMarketOrder(
+           user.exchange,
+           symbol,
+           side,
+           Math.floor((Math.abs(p.positionAmt) * (inputValueSellAll / 100)) / minQty) * minQty
+         )
+         //平倉後重設重複參數
+         setRepeatSymbol('')
+         setRepeatSide('')
+         setRepeatPrice(0)
+         return true
+       })
+    }
   }
   //市價止損單
   const stopLossOrder = () => {
-    Object.values(position)
-      .filter((item) => Math.abs(item.positionAmt) > 0)
-      .map((p) => {
-        let side = ''
-        //倉位數量大於0,止損side則設為sell，反之則相反
-        if (p.positionAmt > 0) {
-          side = 'sell'
-        }
-        if (p.positionAmt < 0) {
-          side = 'buy'
-        }
-
-        let stopPrice = 0
-        if (side === 'sell') {
-          stopPrice = parseFloat(
-            (((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
-              minTickerSize.toString().length - 2
+    if (!global.users) return
+    for (let user of global.users){
+      Object.values(user.position)
+        .filter((item) => Math.abs(item.positionAmt) > 0)
+        .map((p) => {
+          let side = ''
+          //倉位數量大於0,止損side則設為sell，反之則相反
+          if (p.positionAmt > 0) {
+            side = 'sell'
+          }
+          if (p.positionAmt < 0) {
+            side = 'buy'
+          }
+  
+          let stopPrice = 0
+          if (side === 'sell') {
+            stopPrice = parseFloat(
+              (((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
+                minTickerSize.toString().length - 2
+              )
             )
-          )
-        }
-        if (side === 'buy') {
-          stopPrice = parseFloat(
-            (((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
-              minTickerSize.toString().length - 2
+          }
+          if (side === 'buy') {
+            stopPrice = parseFloat(
+              (((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(
+                minTickerSize.toString().length - 2
+              )
             )
-          )
-          // stopPrice = (Math.floor((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price)/minTickerSize)*minTickerSize)
-        }
-        console.log(inputValueStopLoss / leverage, stopPrice)
-        console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
-        marketStopLoss(firstUserExchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
-        return true
-      })
+            // stopPrice = (Math.floor((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price)/minTickerSize)*minTickerSize)
+          }
+          console.log(inputValueStopLoss / leverage, stopPrice)
+          console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
+          marketStopLoss(user.exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
+          return true
+        })
+    }
   }
 
   //追蹤止盈單
   const trailingOrder = () => {
-    Object.values(position)
-      .filter((item) => Math.abs(item.positionAmt) > 0)
-      .map((p) => {
-        let side = ''
-        //倉位數量大於0,止損side則設為sell，反之則相反
-        if (p.positionAmt > 0) {
-          side = 'sell'
-        }
-        if (p.positionAmt < 0) {
-          side = 'buy'
-        }
-
-        let activationPrice = 0
-        if (side === 'sell') {
-          activationPrice = parseFloat(
-            (((100 + parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
-              minTickerSize.toString().length - 2
+    if (!global.users) return
+    for (let user of global.users){
+      Object.values(user.position)
+        .filter((item) => Math.abs(item.positionAmt) > 0)
+        .map((p) => {
+          let side = ''
+          //倉位數量大於0,止損side則設為sell，反之則相反
+          if (p.positionAmt > 0) {
+            side = 'sell'
+          }
+          if (p.positionAmt < 0) {
+            side = 'buy'
+          }
+  
+          let activationPrice = 0
+          if (side === 'sell') {
+            activationPrice = parseFloat(
+              (((100 + parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+                minTickerSize.toString().length - 2
+              )
             )
-          )
-        }
-        if (side === 'buy') {
-          activationPrice = parseFloat(
-            (((100 - parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
-              minTickerSize.toString().length - 2
+          }
+          if (side === 'buy') {
+            activationPrice = parseFloat(
+              (((100 - parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
+                minTickerSize.toString().length - 2
+              )
             )
-          )
-        }
-        console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
-        trailingStop(firstUserExchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
-        return true
-      })
+          }
+          console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
+          trailingStop(user.exchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
+          return true
+        })
+    }
   }
 
-  //設定重複賣出參數
+  //設定重複賣出參數 以第一個userexchange為代表
   const onClickSetRepeatParams = () => {
-    Object.values(position)
+    Object.values(global.users[0].position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
         let side = ''
@@ -179,51 +193,59 @@ const Close = () => {
 
   //重複比對是否要賣出
   const repeatSell = () => {
-    if(position!==undefined){
-      let positionAmount = 0
-      // let positionSymbol = ''
-      Object.values(position)
-        .filter((item) => Math.abs(item.positionAmt) > 0)
-        .map((p) => { 
-            positionAmount = parseFloat(p.positionAmt)
-            // positionSymbol = p.symbol
-          }
-        )
-
-    //持多倉狀況
-      if(repeatSymbol===symbol && repeatSide === "sell" && repeatPrice > price){
-            //有"只平倉"參數
-            closeMarketOrder(
-              firstUserExchange,
-              symbol,
-              repeatSide,
-              positionAmount
+    if (!global.users) return
+    for (let user of global.users){
+      if(user.position!==undefined){
+        let positionAmount = 0
+        // let positionSymbol = ''
+        Object.values(user.position)
+          .filter((item) => Math.abs(item.positionAmt) > 0)
+          .map((p) => { 
+              positionAmount = parseFloat(p.positionAmt)
+              // positionSymbol = p.symbol
+            }
+          )
+  
+      //持多倉狀況
+        if(repeatSymbol===symbol && repeatSide === "sell" && repeatPrice > price && repeatPrice !== 0){
+              //有"只平倉"參數
+              closeMarketOrder(
+                user.exchange,
+                symbol,
+                repeatSide,
+                positionAmount
+                )
+              console.log("多單止損rrr")
+              if(positionAmount==0){
+                setRepeatSymbol('')
+                setRepeatSide('')
+                setRepeatPrice(0)
+              }
+            }
+        //持空倉狀況
+        else if(repeatSymbol===symbol && repeatSide === "buy" && repeatPrice < price && repeatPrice !== 0){
+              //有"只平倉"參數
+              console.log(user.exchange,
+                symbol,
+                repeatSide,
+                Math.abs(positionAmount)
+                )
+              closeMarketOrder(
+                user.exchange,
+                symbol,
+                repeatSide,
+                Math.abs(positionAmount)
               )
-            console.log("多單止損rrr")
-            if(positionAmount==0){
-              setRepeatSymbol('')
-              setRepeatSide('')
-              setRepeatPrice(0)
-            }
-          }
-      //持空倉狀況
-      else if(repeatSymbol===symbol && repeatSide === "buy" && repeatPrice < price){
-            //有"只平倉"參數
-            closeMarketOrder(
-              firstUserExchange,
-              symbol,
-              repeatSide,
-              positionAmount
-            )
-            if(positionAmount==0){
-              setRepeatSymbol('')
-              setRepeatSide('')
-              setRepeatPrice(0)
-            }
-            console.log("空單止損rrr")
-      }
-      else{
-        console.log("nothing happend")
+              if(positionAmount==0){
+                setRepeatSymbol('')
+                setRepeatSide('')
+                setRepeatPrice(0)
+              }
+              console.log("空單止損rrr")
+        }
+        else{
+          console.log("nothing happend")
+        }
       }
     }
   }
@@ -236,7 +258,7 @@ const Close = () => {
 
   //not okay
   const cancelOrder = () =>{
-    cancelAllOrder(symbol,time)
+    // cancelAllOrder(symbol,time)
   }
 
   const handleChangeInputSellAll = (event) => {

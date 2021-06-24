@@ -28,7 +28,7 @@ const Open = () => {
 
   //取得槓桿
   useEffect(() => {
-    setAvailableBalance(global.availableBalance)
+    // setAvailableBalance(global.availableBalance)
     setMinQty(global.minQty)
     setPrice(global.price)
     setLeverage(global.leverage)
@@ -52,33 +52,36 @@ const Open = () => {
   const handleButtonClick = () => {
     //以下註解 console勿刪
 
-    console.log(
-      'symbol:',
-      symbol,
-      '多空:',
-      side,
-      '幾趴:',
-      inputValue,
-      '買入數量:',
-      parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty),
-      'availableBalance',
-      availableBalance,
-      'leverage',
-      leverage,
-      'price',
-      price,
-      'inputValue',
-      inputValue
-    )
-    openMarketOrder(
-      firstUserExchange,
-      symbol,
-      side,
-      parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
+    if (!global.users) return
+    for (let user of global.users){
+      console.log(
+        'symbol:',
+        symbol,
+        '多空:',
+        side,
+        '幾趴:',
+        inputValue,
+        '買入數量:',
+        parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty),
+        'availableBalance',
+        user.availableBalance,
+        'leverage',
+        leverage,
+        'price',
+        price,
+        "user.exchange",
+        user.exchange
+      )
+      openMarketOrder(
+        user.exchange,
+        symbol,
+        side,
+        parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
+      )
+    }
 
-    )
 
-    // console.log(response)
+
   }
 
   return (
@@ -129,19 +132,19 @@ const Open = () => {
       </div>
 
       <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">
+        {/* <span className="text-white text-lg mr-5 font-bold">
           可買入數量:{((availableBalance * leverage) / price) * (inputValue / 100)}
-        </span>
+        </span> */}
 
         <span className="text-white text-lg mr-5 font-bold">最低買入單位:{minQty ? minQty : 0}</span>
       </div>
 
-      <div className="flex items-center">
+      {/* <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
           實際買入數量:
           {parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)}
         </span>
-      </div>
+      </div> */}
 
       <div className="flex items-center">
         <Button onClick={handleButtonClick} size="small" variant="contained" color="primary">

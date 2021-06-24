@@ -35,16 +35,16 @@ function App() {
   const [, setMinQty] = useState(0)
   const [, setMinTickerSize] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
+
+
   const [allTicker, setAllTicker] = useState(0)
   const [accountEvent, setAccountEvent] = useState({})
-
   const users = [
-    { id: 1, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
-    { id: 2, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+    { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
+    { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
-
   
-  // console.log("global",global)
+  console.log("global",global)
 
   // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
   useEffect(() => {
@@ -102,7 +102,7 @@ function App() {
             return {
               ...prev,
               price: parseFloat(element.c),
-              time: element.E
+              time: element.E,
             }
           })
         }
@@ -132,27 +132,41 @@ function App() {
 
  //更新條件：accountEven（有推送帳戶訊息時）,firstUserExchange 更新balance,position和account
  useEffect(() => {
-    const getData = async () => {
+    const getData = async (user) => {
 
-      // 如果第一個使用者是null時跳出
-      if (!firstUserExchange) return
-
-      const balanceData = await getBalance(firstUserExchange)
-      const accountData = await getAccount(firstUserExchange)
+      // 如果使用者是null時跳出
+      if (!user.exchange) return
+      const balanceData = await getBalance(user.exchange)
+      const accountData = await getAccount(user.exchange)
 
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setGlobal((prev) => {
-        return { 
-          ...prev, 
-          availableBalance: parseFloat(
-          Object.values(balanceData)
-            .filter((item) => item.asset === 'USDT')
-            .map((b) => b?.availableBalance)
-            ),
-          account: accountData,
-          position: Object.values(accountData.positions).filter(
+      let newUserData = [...prev.users] 
+      // console.log("newUserDataqq",newUserData)
+
+      newUserData[user.id].availableBalance = parseFloat(
+        Object.values(balanceData)
+          .filter((item) => item.asset === 'USDT')
+          .map((b) => b?.availableBalance)
+          )
+      newUserData[user.id].account = accountData
+      newUserData[user.id].position = Object.values(accountData.positions).filter(
             (item) => Math.abs(item.positionAmt) > 0 //絕對值
-            ),
+          )
+
+      // console.log("newUserData",newUserData)
+        return { 
+          ...prev,
+          users : newUserData,
+          // availableBalance: parseFloat(
+          // Object.values(balanceData)
+          //   .filter((item) => item.asset === 'USDT')
+          //   .map((b) => b?.availableBalance)
+          //   ),
+          // account: accountData,
+          // position: Object.values(accountData.positions).filter(
+          //   (item) => Math.abs(item.positionAmt) > 0 //絕對值
+          //   ),
           }
         })
         
@@ -163,17 +177,19 @@ function App() {
         ))
       
     }
-      getData()
+    if (!global.users) return
+    for (let user of global.users){
+      getData(user)
+    }
     
   }, [accountEvent, firstUserExchange])
-
 
   // 換symbol時,要更新leverage,更新MinQty,MinTickerSize
   useEffect(() => {
     // 如果第一個使用者是null時跳出
     if (!firstUserExchange) return
 
-    const init = async () => {
+    const init = async (user) => {
       //取得市場資料
       const ccxtMarket = await getMarkets(firstUserExchange)
       setMarkets(ccxtMarket.map((item) => item.symbol))
@@ -223,12 +239,15 @@ function App() {
               .filter((item) => item.symbol === symbol?.replace('/', ''))
               .map((l) => l.leverage)
           ),
+          
         }
       })
 
     }
 
     init()
+
+    
   }, [slideValue, symbol, firstUserExchange])
 
 
@@ -241,7 +260,11 @@ function App() {
     setGlobal((prev) => {
       return { ...prev, leverage: newValue }
     })
-    changeLeverage(firstUserExchange, symbol.replace('/', ''), newValue)
+
+    for (let user of global.users){
+      changeLeverage(user.exchange, symbol.replace('/', ''), newValue)
+
+    }
   }
 
   // 選幣別時,把選項存起來,底線是他會傳兩個參數,可是只用的到第二個,第一格就可以放底線
@@ -255,6 +278,9 @@ function App() {
   return (
     <div className="h-full w-full flex  bg-darkblue">
       <div className="justify-items-center rounded-xl p-4 space-y-2 m-auto bg-lightblue">
+      <div className="flex items-center">
+          <span className="text-white text-lg mr-5 font-bold">以下資料以第一隻帳號為基準</span>
+        </div>
         <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">獲取時間:</span>
           <span className="text-white">{time ? moment(parseInt(time)).format('YYYY-MM-DD HH:mm:ss') : ''}</span>
