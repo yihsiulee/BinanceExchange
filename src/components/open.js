@@ -1,4 +1,4 @@
- import React, { useEffect, useState, useContext } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { InputTextField } from '../styles'
 import Button from '@material-ui/core/Button'
 import Radio from '@material-ui/core/Radio'
@@ -50,10 +50,15 @@ const Open = () => {
   // }
 
   const handleButtonClick = () => {
-    //以下註解 console勿刪
+    const regex = new RegExp("^[1-9][0-9]?$|^100$");
+    if (!regex.test(inputValue)) {
+      alert("請輸入0到100的數字")
+      return
+    }
 
+    //以下註解 console勿刪
     if (!global.users) return
-    for (let user of global.users){
+    for (let user of global.users) {
       console.log(
         'symbol:',
         symbol,
@@ -78,6 +83,8 @@ const Open = () => {
         side,
         parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
       )
+
+
     }
 
 
