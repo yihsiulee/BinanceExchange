@@ -28,59 +28,14 @@ const useStyles = makeStyles({
 
 const UserInfo = () => {
   const [global] = useContext(GlobalContext)
-  const [balance, setBalance] = useState()
-  const [account, setAccount] = useState({})
-  const [incomeDay, setIncomeDay] = useState({}) // 近24小時獲利
-  const [incomeWeek, setIncomeWeek] = useState({}) // 近7日獲利
-  const [time, setTime] = useState()
-  const firstUserExchange = _.get(global, 'users[0].exchange', null)
   const [users, setUsers] = useState()
+  // const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
 
   useEffect(() => {
     if (!global.users) return
     setUsers(global.users)
-    setAccount(global.users[0].account)
-    setTime(global.time)
-    // console.log(users)
   }, [global])
-
-  useEffect(() => {
-    const getIncomeData = async () => {
-      const incomeData = await getIncome(firstUserExchange)
-      if (!incomeData) return
-      var total_income_day = 0
-      var total_income_week = 0
-      Object.values(incomeData)
-        .filter((element) => timeDifference(new Date().getTime(), element.time).daysDifference < 7) // 篩出與現在時間差距小於七天的交易
-        .map((m) => {
-          // 加總近7日獲利
-          total_income_week += parseFloat(m.income)
-
-          // 加總近24小時獲利
-          if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
-            total_income_day += parseFloat(m.income)
-        })
-      // console.log("近24小時獲利: " + total_income_day)
-      // console.log("近7日獲利: " + total_income_week)
-
-      setIncomeDay(total_income_day.toFixed(5))
-      setIncomeWeek(total_income_week.toFixed(5))
-
-      // console.log(incomeData)
-      setBalance(incomeData)
-    }
-    getIncomeData()
-  }, [global.accountEvent])
-
-  // useEffect(() => {
-  //   const getPositionData = async () => {
-  //     const positionData = await getPosition()
-  //     setPosition(positionData)
-  //   }
-  //   getPositionData()
-  // }, [])
-
 
   const classes = useStyles()
   if (!users) {
@@ -97,8 +52,8 @@ const UserInfo = () => {
               <StyledTableCell>已使用</StyledTableCell>
               <StyledTableCell>已開倉%數</StyledTableCell>
               <StyledTableCell>未實現損益</StyledTableCell>
-              <StyledTableCell align="right">本日獲利</StyledTableCell>
-              <StyledTableCell align="right">本週獲利</StyledTableCell>
+              <StyledTableCell>本日獲利</StyledTableCell>
+              <StyledTableCell>本週獲利</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -109,10 +64,10 @@ const UserInfo = () => {
                   <StyledTableCell align="right">{_.get(user.account, 'totalMarginBalance', 0)}</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'availableBalance', 0)}</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'totalInitialMargin', 0)}</StyledTableCell>
-                  <StyledTableCell align="right">{(_.get(user.account, 'totalInitialMargin', 0) / _.get(account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
+                  <StyledTableCell align="right">{(_.get(user.account, 'totalInitialMargin', 0) / _.get(user.account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
-                  <StyledTableCell align="right">{incomeDay.toString()}</StyledTableCell>
-                  <StyledTableCell align="right">{incomeWeek.toString()}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user, 'profitDay', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user, 'profitWeek', 0)}</StyledTableCell>
                 </TableRow>)
             })}
           </TableBody>
@@ -122,27 +77,3 @@ const UserInfo = () => {
   }
 }
 export default UserInfo
-
-
-function timeDifference(date1, date2) {
-  var difference = date1 - date2;
-
-  var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
-  difference -= daysDifference * 1000 * 60 * 60 * 24
-
-  var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
-  difference -= hoursDifference * 1000 * 60 * 60
-
-  var minutesDifference = Math.floor(difference / 1000 / 60);
-  difference -= minutesDifference * 1000 * 60
-
-  var secondsDifference = Math.floor(difference / 1000);
-
-  return { daysDifference, hoursDifference }
-
-  // console.log('difference = ' + 
-  //   daysDifference + ' day/s ' + 
-  //   hoursDifference + ' hour/s ' + 
-  //   minutesDifference + ' minute/s ' + 
-  //   secondsDifference + ' second/s ');
-}
