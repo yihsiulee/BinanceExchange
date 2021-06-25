@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey } from './api'
+import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey, keepAliveWS } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -56,6 +56,20 @@ function App() {
           return { id: user.id, exchange: initBinanceExchange(user) }
         })
       )
+
+      // 展延WS key
+      const keepaliveWS = setInterval(() => {
+        keepAliveWS({ user: users[0] })
+        // 怕意外，每五十分鐘更新一次
+      }, 3000000)
+
+      // 一個WS key最多展延到24小時，因此每天都要重新取得WS key
+      const renew_ws_key = setInterval(() => {
+        getWebSocketKey({ user: users[0] })
+        // 怕意外，每23hr更新
+      }, 82800000)
+
+
       setGlobal((prev) => {
         return { ...prev, users: exchanges }
       })
