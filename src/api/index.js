@@ -139,22 +139,46 @@ export const getTrades = (binance_exchange) => {
 }
 
 
-export const getWebSocketKey = async (user, method="POST", endPoint="/fapi/v1/listenKey") => {
+export const getWebSocketKey = async (user, method = "POST", endPoint = "/fapi/v1/listenKey") => {
   const HOST_NAME = "https://fapi.binance.com"
-  // const timestamp = new Date().getTime()
-  // var payload = timestamp + method.toUpperCase() + endPoint
-  // const signature = CryptoJS.HmacSHA256(payload, "5UI6yZBhl7kfCdJgqDb4rVTWc3EI8aXGz8hQN8UVJ9R9BFIJUvTxugM8LDNoouxU").toString(CryptoJS.enc['Hex'])
-  // const KEY = "8M6utsPFzVJPlH8zbaPWfLb0UTUAS123ZTgnyz2Fh2Q5PaoevGTHniUDnuSvXXMJ"
-  // console.log(user.user.apiKey)
   var url = HOST_NAME + endPoint
   const result = await fetch(url, {
     method: method,
-    headers:{
+    headers: {
       "X-MBX-APIKEY": user.user.apiKey,
     },
-  }).then(response => response.json())
+  }).then(response => {
+    if(response.status===200){
+      console.log("WS key got")
+      return response.json()
+    }else{
+      console.log("Failed to get WS key")
+    }
+  }
+  )
     .catch(function (error) {
       console.log(error)
     })
   return result.listenKey
+}
+
+// Keepalive WS的user data需要60分鐘展延一次
+export const keepAliveWS = async (user, method = "PUT", endPoint = "/fapi/v1/listenKey") => {
+  const HOST_NAME = "https://fapi.binance.com"
+  var url = HOST_NAME + endPoint
+  const result = await fetch(url, {
+    method: method,
+    headers: {
+      "X-MBX-APIKEY": user.user.apiKey,
+    },
+  }).then(response => {
+    if (response.status === 200)
+      console.log("user: " + user.user.id + " WS key refreshed")
+      else
+      console.log("user: " + user.user.id + " Failed to refresh WS key")
+
+  })
+    .catch(function (error) {
+      console.log(error)
+    })
 }
