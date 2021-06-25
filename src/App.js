@@ -41,7 +41,7 @@ function App() {
   const [accountEvent, setAccountEvent] = useState({})
   const users = [
     { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
-    // { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+    { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
   
   // console.log("global",global)

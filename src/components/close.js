@@ -48,6 +48,11 @@ const Close = () => {
 
   //一鍵市價平倉 func 
   const sellAllOrder = () => {
+    const regex = new RegExp("^[1-9][0-9]?$|^100$");
+    if (!regex.test(inputValueSellAll)) {
+      alert("請輸入1到100的數字")
+      return
+    }
     if (!global.users) return
     for (let user of global.users){
       Object.values(user.position)
@@ -78,6 +83,12 @@ const Close = () => {
   }
   //市價止損單
   const stopLossOrder = () => {
+    const regex = new RegExp("^[1-9][0-9]?$|^100$");
+    if (!regex.test(inputValueStopLoss)) {
+      alert("請輸入1到100的數字")
+      return
+    }
+    
     if (!global.users) return
     for (let user of global.users){
       Object.values(user.position)
@@ -118,6 +129,16 @@ const Close = () => {
 
   //追蹤止盈單
   const trailingOrder = () => {
+    if (!(parseInt(activationPercentage)<=500 && 1<=parseInt(activationPercentage))){
+      alert("目標%數請輸入1-500的數字")
+      return
+    }
+    if (!(parseInt(callbackRate)<=5 && 0.5<=parseInt(callbackRate))){
+      alert("追蹤%數請輸入0.1-5的數字")
+      return
+    }
+   
+
     if (!global.users) return
     for (let user of global.users){
       Object.values(user.position)
@@ -156,6 +177,10 @@ const Close = () => {
 
   //設定重複賣出參數 以第一個userexchange為代表
   const onClickSetRepeatParams = () => {
+    if (!(parseInt(repeatPercentage)<=100 && 1<=parseInt(repeatPercentage))){
+      alert("設定%數請輸入1-100的數字")
+      return
+    }
     Object.values(global.users[0].position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {

@@ -52,7 +52,7 @@ const Open = () => {
   const handleButtonClick = async () => {
     const regex = new RegExp("^[1-9][0-9]?$|^100$");
     if (!regex.test(inputValue)) {
-      alert("請輸入0到100的數字")
+      alert("請輸入1到100的數字")
       return
     }
     var message = ""

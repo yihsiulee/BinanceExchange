@@ -42,7 +42,7 @@ const UserInfo = () => {
     setUsers(global.users)
     setAccount(global.users[0].account)
     setTime(global.time)
-    console.log(users)
+    // console.log(users)
   }, [global])
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const UserInfo = () => {
             {users.map((user) => {
               return (
                 <TableRow>
-                  <StyledTableCell>{"USER: " + _.get(user.id, '', 0)}</StyledTableCell>
+                  <StyledTableCell>{"USER: " + _.get(user, 'id', 0)}</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'totalMarginBalance', 0)}</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'availableBalance', 0)}</StyledTableCell>
                   <StyledTableCell align="right">{_.get(user.account, 'totalInitialMargin', 0)}</StyledTableCell>
