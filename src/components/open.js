@@ -49,12 +49,13 @@ const Open = () => {
   //   setAmount(num)
   // }
 
-  const handleButtonClick = () => {
+  const handleButtonClick = async () => {
     const regex = new RegExp("^[1-9][0-9]?$|^100$");
     if (!regex.test(inputValue)) {
       alert("請輸入0到100的數字")
       return
     }
+    var message = ""
 
     //以下註解 console勿刪
     if (!global.users) return
@@ -77,15 +78,18 @@ const Open = () => {
         "user.exchange",
         user.exchange
       )
-      openMarketOrder(
+      await openMarketOrder(
         user.exchange,
         symbol,
         side,
         parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)
-      )
-
-
+      ).then((result) => {
+        message = message + "user: " + user.id + " 買入成功: " + symbol + ", 數量: " + result.amount + "\n"
+      }).catch((e) => {
+        message = message + "user: " + user.id + " 買入失敗： " + e + "\n"
+      })
     }
+    alert(message)
 
 
 

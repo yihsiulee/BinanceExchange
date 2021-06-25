@@ -11,6 +11,7 @@ import TableBody from '@material-ui/core/TableBody'
 import TableContainer from '@material-ui/core/TableContainer'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+import { VerifiedUserSharp } from '@material-ui/icons'
 
 const useStyles = makeStyles({
   root: {
@@ -33,17 +34,21 @@ const UserInfo = () => {
   const [incomeWeek, setIncomeWeek] = useState({}) // 近7日獲利
   const [time, setTime] = useState()
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
+  const [users, setUsers] = useState()
 
 
   useEffect(() => {
-    setAccount(global.account)
+    if (!global.users) return
+    setUsers(global.users)
+    setAccount(global.users[0].account)
     setTime(global.time)
+    console.log(users)
   }, [global])
-  
+
   useEffect(() => {
     const getIncomeData = async () => {
       const incomeData = await getIncome(firstUserExchange)
-
+      if (!incomeData) return
       var total_income_day = 0
       var total_income_week = 0
       Object.values(incomeData)
@@ -51,7 +56,7 @@ const UserInfo = () => {
         .map((m) => {
           // 加總近7日獲利
           total_income_week += parseFloat(m.income)
-          
+
           // 加總近24小時獲利
           if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
             total_income_day += parseFloat(m.income)
@@ -66,7 +71,7 @@ const UserInfo = () => {
       setBalance(incomeData)
     }
     getIncomeData()
-  }, [time])
+  }, [global.accountEvent])
 
   // useEffect(() => {
   //   const getPositionData = async () => {
@@ -78,41 +83,43 @@ const UserInfo = () => {
 
 
   const classes = useStyles()
-
-  return (
-    <TableContainer>
-      <Table className={classes.root} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <StyledTableCell>帳號資訊</StyledTableCell>
-            <StyledTableCell>帳號總值</StyledTableCell>
-            <StyledTableCell>帳號餘額</StyledTableCell>
-            <StyledTableCell>已使用</StyledTableCell>
-            <StyledTableCell>已開倉%數</StyledTableCell>
-            <StyledTableCell>未實現損益</StyledTableCell>
-            <StyledTableCell align="right">本日獲利</StyledTableCell>
-            <StyledTableCell align="right">本週獲利</StyledTableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {/* {rows.map((row) => ( */}
-          <TableRow>
-            <StyledTableCell>{_.get(account, 'result.username', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'totalMarginBalance', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'availableBalance', 0)}</StyledTableCell>
-
-            <StyledTableCell align="right">{_.get(account, 'totalInitialMargin', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{(_.get(account, 'totalInitialMargin', 0) / _.get(account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{incomeDay.toString()}</StyledTableCell>
-            <StyledTableCell align="right">{incomeWeek.toString()}</StyledTableCell>
-
-          </TableRow>
-          {/* ))} */}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  )
+  if (!users) {
+    return <div></div>
+  } else {
+    return (
+      <TableContainer>
+        <Table className={classes.root} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <StyledTableCell>帳號資訊</StyledTableCell>
+              <StyledTableCell>帳號總值</StyledTableCell>
+              <StyledTableCell>帳號餘額</StyledTableCell>
+              <StyledTableCell>已使用</StyledTableCell>
+              <StyledTableCell>已開倉%數</StyledTableCell>
+              <StyledTableCell>未實現損益</StyledTableCell>
+              <StyledTableCell align="right">本日獲利</StyledTableCell>
+              <StyledTableCell align="right">本週獲利</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((user) => {
+              return (
+                <TableRow>
+                  <StyledTableCell>{"USER: " + _.get(user.id, '', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalMarginBalance', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'availableBalance', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalInitialMargin', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{(_.get(user.account, 'totalInitialMargin', 0) / _.get(account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{incomeDay.toString()}</StyledTableCell>
+                  <StyledTableCell align="right">{incomeWeek.toString()}</StyledTableCell>
+                </TableRow>)
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )
+  }
 }
 export default UserInfo
 

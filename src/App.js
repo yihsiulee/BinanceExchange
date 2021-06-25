@@ -41,10 +41,10 @@ function App() {
   const [accountEvent, setAccountEvent] = useState({})
   const users = [
     { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
-    { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+    // { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
   
-  console.log("global",global)
+  // console.log("global",global)
 
   // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
   useEffect(() => {
@@ -371,7 +371,7 @@ function App() {
         {/* user顯示 */}
         {/* <User /> */}
 
-        {/* <UserInfo /> */}
+        <UserInfo />
 
         {/* 定時Call API */}
         {/* <Period /> */}
