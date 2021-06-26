@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey, keepAliveWS, getIncome } from './api'
+import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey, keepAliveWS, getIncome, getAllOrder } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -41,7 +41,7 @@ function App() {
   const [accountEvent, setAccountEvent] = useState({})
   const users = [
     { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
-    // { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+    { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
 
   // console.log("global",global)
@@ -153,6 +153,7 @@ function App() {
       const balanceData = await getBalance(user.exchange)
       const accountData = await getAccount(user.exchange)
       const incomeData = await getIncome(user.exchange)
+      // const orderData = await getAllOrder(user.exchange)
 
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setGlobal((prev) => {
@@ -178,12 +179,14 @@ function App() {
             if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
               total_income_day += parseFloat(m.income)
           })
+
         newUserData[user.id].account = accountData
         newUserData[user.id].position = Object.values(accountData.positions).filter(
           (item) => Math.abs(item.positionAmt) > 0 //絕對值
         )
         newUserData[user.id].profitDay = total_income_day.toFixed(5)
         newUserData[user.id].profitWeek = total_income_week.toFixed(5)
+        // newUserData[user.id].orders = 
         // console.log("newUserData",newUserData)
         return {
           ...prev,

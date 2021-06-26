@@ -1,4 +1,4 @@
-import ccxt from 'ccxt'
+import ccxt, { binance } from 'ccxt'
 import CryptoJS from 'crypto-js'
 
 export const initBinanceExchange = (user) => {
@@ -123,13 +123,16 @@ export const trailingStop = (binance_exchange, symbol, side, amount, activationP
       }
   )
 }
-//取消全部委託單 不能用
-export const cancelAllOrder = (binance_exchange, symbol, timestamp) => {
+//取消委託單 
+export const cancelOrder = (binance_exchange, orderId, symbol) => {
   if (!binance_exchange) return
-  return binance_exchange.fapiPrivateDeleteAllOpenOrders({
-    symbol: symbol,
-    timestamp: timestamp,
-  })
+  return binance_exchange.cancelOrder(orderId, symbol)
+}
+
+export const getAllOrder = (binance_exchange, symbol)=>{
+  if (!binance_exchange) return
+  //fetchOpenOrders (symbol = undefined, since = undefined, limit = undefined, params = {})
+  return binance_exchange.fetchOpenOrders (symbol, undefined, undefined)
 }
 
 //取得交易資料

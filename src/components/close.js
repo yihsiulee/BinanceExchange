@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { closeMarketOrder, marketStopLoss, cancelAllOrder, trailingStop, getAccount } from '../api'
+import { closeMarketOrder, marketStopLoss, cancelOrder, trailingStop, getAccount, getAllOrder } from '../api'
 import _, { set } from 'lodash'
 
 const Close = () => {
@@ -17,6 +17,8 @@ const Close = () => {
   const [price, setPrice] = useState(0)
   const [minTickerSize, setMinTickerSize] = useState(0)
   const firstUserExchange = _.get(global, 'users[0].exchange', null)
+  const ndUserExchange = _.get(global, 'users[1].exchange', null)
+
   const [time, setTime] = useState(0)
   const [activationPercentage, setActivationPercentage] = useState(0)
   const [callbackRate, setCallbackRate] = useState(0)
@@ -39,7 +41,7 @@ const Close = () => {
 
   useEffect(() => {
     //如果沒設定repeat價格就跳出
-    if (repeatPrice == 0) return
+    if (parseFloat(repeatPrice) == 0) return
     repeatSell()
   }, [price])
   // console.log("close:",global)
@@ -53,8 +55,8 @@ const Close = () => {
       alert("請輸入1到100的數字")
       return
     }
-    if (!global.users) return
     var message = ""
+    if (!global.users) return
 
     for await (let user of global.users) {
       Object.values(user.position)
@@ -81,15 +83,15 @@ const Close = () => {
             message = message + "user: " + user.id + ", " + symbol + " 平倉失敗： " + e + "\n"
             // console.log(message)
           })
+          
           alert(message)
-
           //平倉後重設重複參數
           setRepeatSymbol('')
           setRepeatSide('')
           setRepeatPrice(0)
           return true
         })
-    }
+      }
   }
   //市價止損單
   const stopLossOrder = async () => {
@@ -311,9 +313,15 @@ const Close = () => {
     setRepeatSymbol('')
   }
 
-  //not okay
-  const cancelOrder = () => {
-    // cancelAllOrder(symbol,time)
+  //取消所有掛單
+  const cancelAllOrder = async () => {
+    for (let user of global.users) {
+      const orderData = await getAllOrder(user.exchange, symbol)
+      orderData.map((item)=>{
+        cancelOrder(user.exchange, item.id, symbol)
+      })
+      // console.log(user.id,orderData.map((item)=>item.id))
+    }
   }
 
   const handleChangeInputSellAll = (event) => {
@@ -341,7 +349,10 @@ const Close = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">市價止損掛單參數:(以下皆用市價算%數)</span>
+        <span className="text-red-600 text-lg mr-5 font-bold">以下皆用市價根據%數算出止盈/止損價格</span>
+      </div>
+      <div className="flex items-center">
+        <span className="text-red-600 text-lg mr-5 font-bold">(全倉)市價止損掛單參數:</span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">觸發止損價格(持多倉/持空倉):
@@ -379,7 +390,7 @@ const Close = () => {
 
       {/* 重複止損 */}
       <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">重複止損直到平倉:</span>
+        <span className="text-red-600 text-lg mr-5 font-bold">(全倉)重複止損直到平倉:</span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
@@ -449,7 +460,7 @@ const Close = () => {
       </div>
 
       <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">追蹤止盈掛單:</span>
+        <span className="text-red-600 text-lg mr-5 font-bold">(全倉)追蹤止盈掛單:</span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">目標價格(持多倉/持空倉):
@@ -506,15 +517,19 @@ const Close = () => {
       </div>
 
       <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">(還不能用)一鍵取消所有委託單:</span>
+        <span className="text-red-600 text-lg mr-5 font-bold">一鍵取消幣安上所有委託單:</span>
       </div>
       <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">當前幣種:{symbol}</span>
+      </div>
+
+      <div className="flex items-center">
         {symbol ? (
-          <Button onClick={cancelOrder} size="small" variant="contained" color="primary">
+          <Button onClick={cancelAllOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         ) : (
-          <Button disabled onClick={cancelOrder} size="small" variant="contained" color="primary">
+          <Button disabled onClick={cancelAllOrder} size="small" variant="contained" color="primary">
             confirm
           </Button>
         )}
