@@ -98,11 +98,11 @@ const Open = () => {
   return (
     <div className="space-y-2">
       <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">開倉參數:</span>
+        <span className="text-red-600 text-lg mr-5 font-bold">市價開倉:</span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
-          <span className="mr-5">多空倉切換:</span>
+          <span className="mr-5">多空切換:</span>
           <span>{side}</span>
           <div>
             <FormControl component="fieldset">
@@ -146,8 +146,7 @@ const Open = () => {
         {/* <span className="text-white text-lg mr-5 font-bold">
           可買入數量:{((availableBalance * leverage) / price) * (inputValue / 100)}
         </span> */}
-
-        <span className="text-white text-lg mr-5 font-bold">最低買入單位:{minQty ? minQty : 0}</span>
+        <span className="text-white text-lg mr-5 font-bold">此幣種最低買入單位:{minQty ? minQty : 0}顆</span>
       </div>
 
       {/* <div className="flex items-center">
