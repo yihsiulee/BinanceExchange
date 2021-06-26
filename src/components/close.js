@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button'
 import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
-import { closeMarketOrder, marketStopLoss, cancelAllOrder, trailingStop, getAccount} from '../api'
+import { closeMarketOrder, marketStopLoss, cancelAllOrder, trailingStop, getAccount } from '../api'
 import _, { set } from 'lodash'
 
 const Close = () => {
@@ -39,7 +39,7 @@ const Close = () => {
 
   useEffect(() => {
     //如果沒設定repeat價格就跳出
-    if(repeatPrice==0) return
+    if (repeatPrice == 0) return
     repeatSell()
   }, [price])
   // console.log("close:",global)
@@ -47,42 +47,63 @@ const Close = () => {
 
 
   //一鍵市價平倉 func 
-  const sellAllOrder = () => {
+  const sellAllOrder = async () => {
+    const regex = new RegExp("^[1-9][0-9]?$|^100$");
+    if (!regex.test(inputValueSellAll)) {
+      alert("請輸入1到100的數字")
+      return
+    }
     if (!global.users) return
-    for (let user of global.users){
+    var message = ""
+
+    for await (let user of global.users) {
       Object.values(user.position)
-       .filter((item) => Math.abs(item.positionAmt) > 0)
-       .map((p) => {
-         console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
-         let side = ''
-         //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
-         if (p.positionAmt > 0) {
-           side = 'sell'
-         }
-         if (p.positionAmt < 0) {
-           side = 'buy'
-         }
-         closeMarketOrder(
-           user.exchange,
-           symbol,
-           side,
-           Math.floor((Math.abs(p.positionAmt) * (inputValueSellAll / 100)) / minQty) * minQty
-         )
-         //平倉後重設重複參數
-         setRepeatSymbol('')
-         setRepeatSide('')
-         setRepeatPrice(0)
-         return true
-       })
+        .filter((item) => Math.abs(item.positionAmt) > 0)
+        .map(async (p) => {
+          console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
+
+          let side = ''
+          //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
+          if (p.positionAmt > 0) {
+            side = 'sell'
+          }
+          if (p.positionAmt < 0) {
+            side = 'buy'
+          }
+          await closeMarketOrder(
+            user.exchange,
+            symbol,
+            side,
+            Math.floor((Math.abs(p.positionAmt) * (inputValueSellAll / 100)) / minQty) * minQty
+          ).then((result) => {
+            message = message + "user: " + user.id + " 已平倉: " + symbol + ", 數量: " + result.amount + "\n"
+          }).catch((e) => {
+            message = message + "user: " + user.id + ", " + symbol + " 平倉失敗： " + e + "\n"
+            // console.log(message)
+          })
+          alert(message)
+
+          //平倉後重設重複參數
+          setRepeatSymbol('')
+          setRepeatSide('')
+          setRepeatPrice(0)
+          return true
+        })
     }
   }
   //市價止損單
-  const stopLossOrder = () => {
+  const stopLossOrder = async () => {
+    const regex = new RegExp("^[1-9][0-9]?$|^100$");
+    if (!regex.test(inputValueStopLoss)) {
+      alert("請輸入1到100的數字")
+      return
+    }
+
     if (!global.users) return
-    for (let user of global.users){
+    for await (let user of global.users) {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
-        .map((p) => {
+        .map(async (p) => {
           let side = ''
           //倉位數量大於0,止損side則設為sell，反之則相反
           if (p.positionAmt > 0) {
@@ -91,7 +112,7 @@ const Close = () => {
           if (p.positionAmt < 0) {
             side = 'buy'
           }
-  
+
           let stopPrice = 0
           if (side === 'sell') {
             stopPrice = parseFloat(
@@ -110,19 +131,37 @@ const Close = () => {
           }
           console.log(inputValueStopLoss / leverage, stopPrice)
           console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
-          marketStopLoss(user.exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
+
+          var message = ""
+          await marketStopLoss(user.exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
+          .then((result) => {
+            message = message + "user: " + user.id + " 委託成功: " + symbol + " 止損價格: " + result.stopPrice + "\n"
+          }).catch((e) => {
+            message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
+          })
+          alert(message)
           return true
         })
     }
   }
 
   //追蹤止盈單
-  const trailingOrder = () => {
+  const trailingOrder = async() => {
+    if (!(parseInt(activationPercentage) <= 500 && 1 <= parseInt(activationPercentage))) {
+      alert("目標%數請輸入1-500的數字")
+      return
+    }
+    if (!(parseInt(callbackRate) <= 5 && 0.5 <= parseInt(callbackRate))) {
+      alert("追蹤%數請輸入0.1-5的數字")
+      return
+    }
+
+
     if (!global.users) return
-    for (let user of global.users){
+    for (let user of global.users) {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
-        .map((p) => {
+        .map(async (p) => {
           let side = ''
           //倉位數量大於0,止損side則設為sell，反之則相反
           if (p.positionAmt > 0) {
@@ -131,7 +170,7 @@ const Close = () => {
           if (p.positionAmt < 0) {
             side = 'buy'
           }
-  
+
           let activationPrice = 0
           if (side === 'sell') {
             activationPrice = parseFloat(
@@ -148,7 +187,17 @@ const Close = () => {
             )
           }
           console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
-          trailingStop(user.exchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
+
+          var message = ""
+          await trailingStop(user.exchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
+          .then((result) => {
+            console.log(result)
+            message = message + "user: " + user.id + " 委託成功: " + symbol + " 觸發價格: " + result.info.activatePrice + "\n"
+          }).catch((e) => {
+            message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
+            // console.log(message)
+          })
+          alert(message)
           return true
         })
     }
@@ -156,6 +205,10 @@ const Close = () => {
 
   //設定重複賣出參數 以第一個userexchange為代表
   const onClickSetRepeatParams = () => {
+    if (!(parseInt(repeatPercentage) <= 100 && 1 <= parseInt(repeatPercentage))) {
+      alert("設定%數請輸入1-100的數字")
+      return
+    }
     Object.values(global.users[0].position)
       .filter((item) => Math.abs(item.positionAmt) > 0)
       .map((p) => {
@@ -182,7 +235,7 @@ const Close = () => {
             )
           )
         }
-        
+
         setRepeatSymbol(symbol)
         setRepeatSide(side)
         setRepeatPrice(stopPrice)
@@ -194,56 +247,58 @@ const Close = () => {
   //重複比對是否要賣出
   const repeatSell = () => {
     if (!global.users) return
-    for (let user of global.users){
-      if(user.position!==undefined){
+    for (let user of global.users) {
+      if (user.position !== undefined) {
         let positionAmount = 0
         // let positionSymbol = ''
         Object.values(user.position)
           .filter((item) => Math.abs(item.positionAmt) > 0)
-          .map((p) => { 
-              positionAmount = parseFloat(p.positionAmt)
-              // positionSymbol = p.symbol
-            }
+          .map((p) => {
+            positionAmount = parseFloat(p.positionAmt)
+            // positionSymbol = p.symbol
+          }
           )
-  
-      //持多倉狀況
-        if(repeatSymbol===symbol && repeatSide === "sell" && repeatPrice > price && repeatPrice !== 0){
-              //有"只平倉"參數
-              closeMarketOrder(
-                user.exchange,
-                symbol,
-                repeatSide,
-                positionAmount
-                )
-              console.log("多單止損rrr")
-              if(positionAmount==0){
-                setRepeatSymbol('')
-                setRepeatSide('')
-                setRepeatPrice(0)
-              }
-            }
-        //持空倉狀況
-        else if(repeatSymbol===symbol && repeatSide === "buy" && repeatPrice < price && repeatPrice !== 0){
-              //有"只平倉"參數
-              console.log(user.exchange,
-                symbol,
-                repeatSide,
-                Math.abs(positionAmount)
-                )
-              closeMarketOrder(
-                user.exchange,
-                symbol,
-                repeatSide,
-                Math.abs(positionAmount)
-              )
-              if(positionAmount==0){
-                setRepeatSymbol('')
-                setRepeatSide('')
-                setRepeatPrice(0)
-              }
-              console.log("空單止損rrr")
+
+        //持多倉狀況
+        if (repeatSymbol === symbol && repeatSide === "sell" && repeatPrice > price && repeatPrice !== 0) {
+          var message = ""
+          //有"只平倉"參數
+          closeMarketOrder(
+            user.exchange,
+            symbol,
+            repeatSide,
+            positionAmount
+          )
+
+          console.log("多單止損rrr")
+          if (positionAmount == 0) {
+            setRepeatSymbol('')
+            setRepeatSide('')
+            setRepeatPrice(0)
+          }
         }
-        else{
+        //持空倉狀況
+        else if (repeatSymbol === symbol && repeatSide === "buy" && repeatPrice < price && repeatPrice !== 0) {
+          //有"只平倉"參數
+          console.log(user.exchange,
+            symbol,
+            repeatSide,
+            Math.abs(positionAmount)
+          )
+          closeMarketOrder(
+            user.exchange,
+            symbol,
+            repeatSide,
+            Math.abs(positionAmount)
+          )
+          if (positionAmount == 0) {
+            setRepeatSymbol('')
+            setRepeatSide('')
+            setRepeatPrice(0)
+          }
+          console.log("空單止損rrr")
+        }
+        else {
           console.log("nothing happend")
         }
       }
@@ -257,7 +312,7 @@ const Close = () => {
   }
 
   //not okay
-  const cancelOrder = () =>{
+  const cancelOrder = () => {
     // cancelAllOrder(symbol,time)
   }
 
@@ -281,7 +336,7 @@ const Close = () => {
     setRepeatPercentage(parseInt(event.target.value))
   }
 
-  
+
 
   return (
     <div className="space-y-4">
@@ -290,10 +345,10 @@ const Close = () => {
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">觸發止損價格(持多倉/持空倉):
-        
-        {parseFloat((((100-parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
-        /
-        {parseFloat((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
+
+          {parseFloat((((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
+          /
+          {parseFloat((((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
         </span>
       </div>
       <div className="flex items-center">
@@ -329,30 +384,30 @@ const Close = () => {
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">
           (限定與選擇單一貨幣，低於市價自動平倉直到倉位歸0)
-          </span>
+        </span>
       </div>
       <div className="flex items-center">
-          <span className="text-white text-lg mr-5 font-bold">
+        <span className="text-white text-lg mr-5 font-bold">
           當前設定幣種:{repeatSymbol}
-          </span>
+        </span>
       </div>
       <div className="flex items-center">
-          <span className="text-white text-lg mr-5 font-bold">
+        <span className="text-white text-lg mr-5 font-bold">
           當前設定價格:{repeatPrice}
-          </span>
+        </span>
       </div>
       <div className="flex items-center">
-          <span className="text-white text-lg mr-5 font-bold">
+        <span className="text-white text-lg mr-5 font-bold">
           觸發時開倉方向(與持倉相反):{repeatSide}
-          </span>
+        </span>
       </div>
       <div className="flex items-center">
-          <span className="text-white text-lg mr-5 font-bold">
+        <span className="text-white text-lg mr-5 font-bold">
           觸發價格(持多倉/持空倉):
-          {parseFloat((((100-parseFloat((repeatPercentage/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
+          {parseFloat((((100 - parseFloat((repeatPercentage / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
           /
-          {parseFloat((((100+parseFloat((repeatPercentage/leverage).toFixed(2)))/100)*price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length-2))}
-          </span>
+          {parseFloat((((100 + parseFloat((repeatPercentage / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
+        </span>
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">設定%數:{repeatPercentage}</span>
@@ -398,15 +453,15 @@ const Close = () => {
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">目標價格(持多倉/持空倉):
-        {parseFloat(
+          {parseFloat(
             (((100 + parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
-              !minTickerSize ? 0 : minTickerSize.toString().length-2
+              !minTickerSize ? 0 : minTickerSize.toString().length - 2
             )
           )}
-        /
-        {parseFloat(
+          /
+          {parseFloat(
             (((100 - parseFloat((activationPercentage / leverage).toFixed(2))) / 100) * price).toFixed(
-              !minTickerSize ? 0 : minTickerSize.toString().length-2
+              !minTickerSize ? 0 : minTickerSize.toString().length - 2
             )
           )}
         </span>
@@ -439,14 +494,14 @@ const Close = () => {
       </div>
 
       <div className="flex items-center">
-      {symbol ? (
-        <Button onClick={trailingOrder} size="small" variant="contained" color="primary">
-          確認追蹤止盈
-        </Button>
+        {symbol ? (
+          <Button onClick={trailingOrder} size="small" variant="contained" color="primary">
+            確認追蹤止盈
+          </Button>
         ) : (
-        <Button disabled onClick={trailingOrder} size="small" variant="contained" color="primary">
-          確認追蹤止盈
-        </Button>
+          <Button disabled onClick={trailingOrder} size="small" variant="contained" color="primary">
+            確認追蹤止盈
+          </Button>
         )}
       </div>
 

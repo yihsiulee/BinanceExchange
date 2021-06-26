@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import './App.css'
-import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey } from './api'
+import { getMarkets, getTicker, getBalance, getAccount, getServerTime, changeLeverage, initBinanceExchange, getWebSocketKey, keepAliveWS, getIncome } from './api'
 import { useSelectStyles } from './styles'
 import TextField from '@material-ui/core/TextField'
 import Autocomplete from '@material-ui/lab/Autocomplete'
@@ -41,21 +41,35 @@ function App() {
   const [accountEvent, setAccountEvent] = useState({})
   const users = [
     { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
-    { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
+    // { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
-  
-  console.log("global",global)
+
+  // console.log("global",global)
 
   // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
   useEffect(() => {
     const init = async () => {
-      const key = await getWebSocketKey({ user: users[0] }) 
+      const key = await getWebSocketKey({ user: users[0] })
       setWsKey(key)
       const exchanges = await Promise.all(
         users.map(async (user) => {
           return { id: user.id, exchange: initBinanceExchange(user) }
         })
       )
+
+      // 展延WS key
+      const keepaliveWS = setInterval(() => {
+        keepAliveWS({ user: users[0] })
+        // 怕意外，每五十分鐘更新一次
+      }, 3000000)
+
+      // 一個WS key最多展延到24小時，因此每天都要重新取得WS key
+      const renew_ws_key = setInterval(() => {
+        getWebSocketKey({ user: users[0] })
+        // 怕意外，每23hr更新
+      }, 82800000)
+
+
       setGlobal((prev) => {
         return { ...prev, users: exchanges }
       })
@@ -81,7 +95,7 @@ function App() {
     getWS()
   }, [])
 
-  
+
   // UPDATE periodically 從all ticker資料拿出來篩
   useEffect(() => {
     const updateTickerInfo = () => {
@@ -123,41 +137,57 @@ function App() {
         setGlobal((prev) => {
           return { ...prev, accountEvent: JSON.parse(message.data) }
         })
-        console.log("change response:",JSON.parse(message.data))
+        console.log("change response:", JSON.parse(message.data))
       }
     }
     updateAccountData()
   }, [wsKey])
 
 
- //更新條件：accountEven（有推送帳戶訊息時）,firstUserExchange 更新balance,position和account
- useEffect(() => {
+  //更新條件：accountEven（有推送帳戶訊息時）,firstUserExchange 更新balance,position和account
+  useEffect(() => {
     const getData = async (user) => {
 
       // 如果使用者是null時跳出
       if (!user.exchange) return
       const balanceData = await getBalance(user.exchange)
       const accountData = await getAccount(user.exchange)
+      const incomeData = await getIncome(user.exchange)
 
       setPosition(Object.values(accountData.positions).filter((item) => Math.abs(item.positionAmt) > 0))
       setGlobal((prev) => {
-      let newUserData = [...prev.users] 
-      // console.log("newUserDataqq",newUserData)
+        let newUserData = [...prev.users]
+        // console.log("newUserDataqq",newUserData)
 
-      newUserData[user.id].availableBalance = parseFloat(
-        Object.values(balanceData)
-          .filter((item) => item.asset === 'USDT')
-          .map((b) => b?.availableBalance)
-          )
-      newUserData[user.id].account = accountData
-      newUserData[user.id].position = Object.values(accountData.positions).filter(
-            (item) => Math.abs(item.positionAmt) > 0 //絕對值
-          )
+        newUserData[user.id].availableBalance = parseFloat(
+          Object.values(balanceData)
+            .filter((item) => item.asset === 'USDT')
+            .map((b) => b?.availableBalance)
+        )
+        //計算獲利
+        if (!incomeData) return
+        var total_income_day = 0
+        var total_income_week = 0
+        Object.values(incomeData)
+          .filter((element) => timeDifference(new Date().getTime(), element.time).daysDifference < 7) // 篩出與現在時間差距小於七天的交易
+          .map((m) => {
+            // 加總近7日獲利
+            total_income_week += parseFloat(m.income)
 
-      // console.log("newUserData",newUserData)
-        return { 
+            // 加總近24小時獲利
+            if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
+              total_income_day += parseFloat(m.income)
+          })
+        newUserData[user.id].account = accountData
+        newUserData[user.id].position = Object.values(accountData.positions).filter(
+          (item) => Math.abs(item.positionAmt) > 0 //絕對值
+        )
+        newUserData[user.id].profitDay = total_income_day.toFixed(5)
+        newUserData[user.id].profitWeek = total_income_week.toFixed(5)
+        // console.log("newUserData",newUserData)
+        return {
           ...prev,
-          users : newUserData,
+          users: newUserData,
           // availableBalance: parseFloat(
           // Object.values(balanceData)
           //   .filter((item) => item.asset === 'USDT')
@@ -167,21 +197,21 @@ function App() {
           // position: Object.values(accountData.positions).filter(
           //   (item) => Math.abs(item.positionAmt) > 0 //絕對值
           //   ),
-          }
-        })
-        
-        console.log("balance",parseFloat(
-          Object.values(balanceData)
-            .filter((item) => item.asset === 'USDT')
-            .map((b) => b?.availableBalance)
-        ))
-      
+        }
+      })
+
+      console.log("balance", parseFloat(
+        Object.values(balanceData)
+          .filter((item) => item.asset === 'USDT')
+          .map((b) => b?.availableBalance)
+      ))
+
     }
     if (!global.users) return
-    for (let user of global.users){
+    for (let user of global.users) {
       getData(user)
     }
-    
+
   }, [accountEvent, firstUserExchange])
 
   // 換symbol時,要更新leverage,更新MinQty,MinTickerSize
@@ -205,7 +235,7 @@ function App() {
             )
         )
       )
-      
+
       //取得accountData內的slideValue 需有apiKey
       const accountData = await getAccount(firstUserExchange)
       setSlideValue(
@@ -239,7 +269,7 @@ function App() {
               .filter((item) => item.symbol === symbol?.replace('/', ''))
               .map((l) => l.leverage)
           ),
-          
+
         }
       })
 
@@ -247,7 +277,7 @@ function App() {
 
     init()
 
-    
+
   }, [slideValue, symbol, firstUserExchange])
 
 
@@ -261,7 +291,7 @@ function App() {
       return { ...prev, leverage: newValue }
     })
 
-    for (let user of global.users){
+    for (let user of global.users) {
       changeLeverage(user.exchange, symbol.replace('/', ''), newValue)
 
     }
@@ -278,7 +308,7 @@ function App() {
   return (
     <div className="h-full w-full flex  bg-darkblue">
       <div className="justify-items-center rounded-xl p-4 space-y-2 m-auto bg-lightblue">
-      <div className="flex items-center">
+        <div className="flex items-center">
           <span className="text-white text-lg mr-5 font-bold">以下資料以第一隻帳號為基準</span>
         </div>
         <div className="flex items-center">
@@ -357,7 +387,7 @@ function App() {
         {/* user顯示 */}
         {/* <User /> */}
 
-        {/* <UserInfo /> */}
+        <UserInfo />
 
         {/* 定時Call API */}
         {/* <Period /> */}
@@ -365,5 +395,26 @@ function App() {
     </div>
   )
 }
+function timeDifference(date1, date2) {
+  var difference = date1 - date2;
 
+  var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
+  difference -= daysDifference * 1000 * 60 * 60 * 24
+
+  var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
+  difference -= hoursDifference * 1000 * 60 * 60
+
+  var minutesDifference = Math.floor(difference / 1000 / 60);
+  difference -= minutesDifference * 1000 * 60
+
+  var secondsDifference = Math.floor(difference / 1000);
+
+  return { daysDifference, hoursDifference }
+
+  // console.log('difference = ' + 
+  //   daysDifference + ' day/s ' + 
+  //   hoursDifference + ' hour/s ' + 
+  //   minutesDifference + ' minute/s ' + 
+  //   secondsDifference + ' second/s ');
+}
 export default App

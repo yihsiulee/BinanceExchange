@@ -11,6 +11,7 @@ import TableBody from '@material-ui/core/TableBody'
 import TableContainer from '@material-ui/core/TableContainer'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+import { VerifiedUserSharp } from '@material-ui/icons'
 
 const useStyles = makeStyles({
   root: {
@@ -27,115 +28,52 @@ const useStyles = makeStyles({
 
 const UserInfo = () => {
   const [global] = useContext(GlobalContext)
-  const [balance, setBalance] = useState()
-  const [account, setAccount] = useState({})
-  const [incomeDay, setIncomeDay] = useState({}) // 近24小時獲利
-  const [incomeWeek, setIncomeWeek] = useState({}) // 近7日獲利
-  const [time, setTime] = useState()
-  const firstUserExchange = _.get(global, 'users[0].exchange', null)
+  const [users, setUsers] = useState()
+  // const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
 
   useEffect(() => {
-    setAccount(global.account)
-    setTime(global.time)
+    if (!global.users) return
+    setUsers(global.users)
   }, [global])
-  
-  useEffect(() => {
-    const getIncomeData = async () => {
-      const incomeData = await getIncome(firstUserExchange)
-
-      var total_income_day = 0
-      var total_income_week = 0
-      Object.values(incomeData)
-        .filter((element) => timeDifference(new Date().getTime(), element.time).daysDifference < 7) // 篩出與現在時間差距小於七天的交易
-        .map((m) => {
-          // 加總近7日獲利
-          total_income_week += parseFloat(m.income)
-          
-          // 加總近24小時獲利
-          if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
-            total_income_day += parseFloat(m.income)
-        })
-      // console.log("近24小時獲利: " + total_income_day)
-      // console.log("近7日獲利: " + total_income_week)
-
-      setIncomeDay(total_income_day.toFixed(5))
-      setIncomeWeek(total_income_week.toFixed(5))
-
-      // console.log(incomeData)
-      setBalance(incomeData)
-    }
-    getIncomeData()
-  }, [time])
-
-  // useEffect(() => {
-  //   const getPositionData = async () => {
-  //     const positionData = await getPosition()
-  //     setPosition(positionData)
-  //   }
-  //   getPositionData()
-  // }, [])
-
 
   const classes = useStyles()
-
-  return (
-    <TableContainer>
-      <Table className={classes.root} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <StyledTableCell>帳號資訊</StyledTableCell>
-            <StyledTableCell>帳號總值</StyledTableCell>
-            <StyledTableCell>帳號餘額</StyledTableCell>
-            <StyledTableCell>已使用</StyledTableCell>
-            <StyledTableCell>已開倉%數</StyledTableCell>
-            <StyledTableCell>未實現損益</StyledTableCell>
-            <StyledTableCell align="right">本日獲利</StyledTableCell>
-            <StyledTableCell align="right">本週獲利</StyledTableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {/* {rows.map((row) => ( */}
-          <TableRow>
-            <StyledTableCell>{_.get(account, 'result.username', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'totalMarginBalance', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'availableBalance', 0)}</StyledTableCell>
-
-            <StyledTableCell align="right">{_.get(account, 'totalInitialMargin', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{(_.get(account, 'totalInitialMargin', 0) / _.get(account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
-            <StyledTableCell align="right">{_.get(account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
-            <StyledTableCell align="right">{incomeDay.toString()}</StyledTableCell>
-            <StyledTableCell align="right">{incomeWeek.toString()}</StyledTableCell>
-
-          </TableRow>
-          {/* ))} */}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  )
+  if (!users) {
+    return <div></div>
+  } else {
+    return (
+      <TableContainer>
+        <Table className={classes.root} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <StyledTableCell>帳號資訊</StyledTableCell>
+              <StyledTableCell>帳號總值</StyledTableCell>
+              <StyledTableCell>帳號餘額</StyledTableCell>
+              <StyledTableCell>已使用</StyledTableCell>
+              <StyledTableCell>已開倉%數</StyledTableCell>
+              <StyledTableCell>未實現損益</StyledTableCell>
+              <StyledTableCell>本日獲利</StyledTableCell>
+              <StyledTableCell>本週獲利</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((user) => {
+              return (
+                <TableRow>
+                  <StyledTableCell>{"USER: " + _.get(user, 'id', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalMarginBalance', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'availableBalance', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalInitialMargin', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{(_.get(user.account, 'totalInitialMargin', 0) / _.get(user.account, 'totalMarginBalance', 0) * 100).toFixed(2)}%</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user.account, 'totalUnrealizedProfit', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user, 'profitDay', 0)}</StyledTableCell>
+                  <StyledTableCell align="right">{_.get(user, 'profitWeek', 0)}</StyledTableCell>
+                </TableRow>)
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )
+  }
 }
 export default UserInfo
-
-
-function timeDifference(date1, date2) {
-  var difference = date1 - date2;
-
-  var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
-  difference -= daysDifference * 1000 * 60 * 60 * 24
-
-  var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
-  difference -= hoursDifference * 1000 * 60 * 60
-
-  var minutesDifference = Math.floor(difference / 1000 / 60);
-  difference -= minutesDifference * 1000 * 60
-
-  var secondsDifference = Math.floor(difference / 1000);
-
-  return { daysDifference, hoursDifference }
-
-  // console.log('difference = ' + 
-  //   daysDifference + ' day/s ' + 
-  //   hoursDifference + ' hour/s ' + 
-  //   minutesDifference + ' minute/s ' + 
-  //   secondsDifference + ' second/s ');
-}
