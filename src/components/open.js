@@ -56,10 +56,9 @@ const Open = () => {
       return
     }
     var message = ""
-
     //以下註解 console勿刪
     if (!global.users) return
-    for (let user of global.users) {
+    for await (let [i, user] of global.users.entries()) {
       console.log(
         'symbol:',
         symbol,
@@ -88,8 +87,11 @@ const Open = () => {
       }).catch((e) => {
         message = message + "user: " + user.id + " 買入失敗： " + e + "\n"
       })
+
+      if (i === global.users.length - 1) {
+        alert(message)
+      }
     }
-    alert(message)
 
 
 

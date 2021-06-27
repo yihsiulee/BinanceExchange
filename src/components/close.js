@@ -91,7 +91,7 @@ const Close = () => {
           setRepeatSymbol('')
           setRepeatSide('')
           setRepeatPrice(0)
-          return true
+          // return true
         })
     }
   }
@@ -146,7 +146,7 @@ const Close = () => {
           if (i === global.users.length - 1) {
             alert(message)
           }
-          return true
+          // return true
         })
     }
   }
@@ -206,7 +206,7 @@ const Close = () => {
           if (i === global.users.length - 1) {
             alert(message)
           }
-          return true
+          // return true
         })
     }
   }
