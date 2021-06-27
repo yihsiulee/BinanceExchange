@@ -58,7 +58,7 @@ const Close = () => {
     var message = ""
     if (!global.users) return
 
-    for await (let user of global.users) {
+    for await (let [i, user] of global.users.entries()) {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
         .map(async (p) => {
@@ -83,15 +83,17 @@ const Close = () => {
             message = message + "user: " + user.id + ", " + symbol + " 平倉失敗： " + e + "\n"
             // console.log(message)
           })
-          
-          alert(message)
+
+          if (i === global.users.length - 1) {
+            alert(message)
+          }
           //平倉後重設重複參數
           setRepeatSymbol('')
           setRepeatSide('')
           setRepeatPrice(0)
           return true
         })
-      }
+    }
   }
   //市價止損單
   const stopLossOrder = async () => {
@@ -101,8 +103,9 @@ const Close = () => {
       return
     }
 
+    var message = ""
     if (!global.users) return
-    for await (let user of global.users) {
+    for await (let [i, user] of global.users.entries()) {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
         .map(async (p) => {
@@ -134,21 +137,22 @@ const Close = () => {
           console.log(inputValueStopLoss / leverage, stopPrice)
           console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
 
-          var message = ""
           await marketStopLoss(user.exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
-          .then((result) => {
-            message = message + "user: " + user.id + " 委託成功: " + symbol + " 止損價格: " + result.stopPrice + "\n"
-          }).catch((e) => {
-            message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
-          })
-          alert(message)
+            .then((result) => {
+              message = message + "user: " + user.id + " 委託成功: " + symbol + " 止損價格: " + result.stopPrice + "\n"
+            }).catch((e) => {
+              message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
+            })
+          if (i === global.users.length - 1) {
+            alert(message)
+          }
           return true
         })
     }
   }
 
   //追蹤止盈單
-  const trailingOrder = async() => {
+  const trailingOrder = async () => {
     if (!(parseInt(activationPercentage) <= 500 && 1 <= parseInt(activationPercentage))) {
       alert("目標%數請輸入1-500的數字")
       return
@@ -160,7 +164,8 @@ const Close = () => {
 
 
     if (!global.users) return
-    for (let user of global.users) {
+    var message = ""
+    for (let [i, user] of global.users.entries()) {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
         .map(async (p) => {
@@ -190,16 +195,17 @@ const Close = () => {
           }
           console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
 
-          var message = ""
           await trailingStop(user.exchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
-          .then((result) => {
-            console.log(result)
-            message = message + "user: " + user.id + " 委託成功: " + symbol + " 觸發價格: " + result.info.activatePrice + "\n"
-          }).catch((e) => {
-            message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
-            // console.log(message)
-          })
-          alert(message)
+            .then((result) => {
+              console.log(result)
+              message = message + "user: " + user.id + " 委託成功: " + symbol + " 觸發價格: " + result.info.activatePrice + "\n"
+            }).catch((e) => {
+              message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
+              // console.log(message)
+            })
+          if (i === global.users.length - 1) {
+            alert(message)
+          }
           return true
         })
     }
@@ -315,10 +321,22 @@ const Close = () => {
 
   //取消所有掛單
   const cancelAllOrder = async () => {
-    for (let user of global.users) {
+
+    var message = ""
+
+    for (let [i, user] of global.users.entries()) {
       const orderData = await getAllOrder(user.exchange, symbol)
-      orderData.map((item)=>{
-        cancelOrder(user.exchange, item.id, symbol)
+      orderData.map(async (item) => {
+        await cancelOrder(user.exchange, item.id, symbol)
+          .then((result) => {
+            // console.log(result)
+            message = message + "user: " + user.id + " 委託已撤銷: " + symbol + "\n"
+          }).catch((e) => {
+            message = message + "user: " + user.id + ", " + symbol + " 委託單撤銷失敗： " + e + "\n"
+          })
+        if (i === global.users.length - 1) {
+          alert(message)
+        }
       })
       // console.log(user.id,orderData.map((item)=>item.id))
     }
