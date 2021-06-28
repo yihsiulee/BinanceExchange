@@ -157,7 +157,7 @@ const Close = () => {
       alert("目標%數請輸入1-500的數字")
       return
     }
-    if (!(parseInt(callbackRate) <= 5 && 0.5 <= parseInt(callbackRate))) {
+    if (!(parseInt(callbackRate) <= 5 && 0.1 <= parseInt(callbackRate))) {
       alert("追蹤%數請輸入0.1-5的數字")
       return
     }
