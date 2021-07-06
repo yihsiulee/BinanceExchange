@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useContext } from 'react'
-import { getIncome, getPosition, getAccount, getMarkets, getAllImplicitApiMethods, getTrades } from '../api'
 import { GlobalContext } from '../context'
+import Button from '@material-ui/core/Button'
 
 import { StyledTableCell } from '../styles'
 import _ from 'lodash'
@@ -27,7 +27,7 @@ const useStyles = makeStyles({
 })
 
 const UserInfo = () => {
-  const [global] = useContext(GlobalContext)
+  const [global, setGlobal] = useContext(GlobalContext)
   const [users, setUsers] = useState()
   // const firstUserExchange = _.get(global, 'users[0].exchange', null)
 
@@ -37,11 +37,25 @@ const UserInfo = () => {
     setUsers(global.users)
   }, [global])
 
+  const handleButtonClick = () => {
+    setGlobal((prev) => {
+      // 直接將accountEvent設定 就可以觸發更新
+      return { ...prev, userRefreshFlag: new Date().getTime()}
+    })
+  }
+
   const classes = useStyles()
   if (!users) {
     return <div></div>
   } else {
-    return (
+    return (<div>
+      <div className="flex items-center" style={{margin: "30px 0px"}}>
+        <Button onClick={handleButtonClick} size="small" variant="contained" color="primary">
+          Update
+        </Button>
+      </div>
+
+
       <TableContainer>
         <Table className={classes.root} aria-label="simple table">
           <TableHead>
@@ -73,6 +87,8 @@ const UserInfo = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+    </div>
     )
   }
 }
