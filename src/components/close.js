@@ -153,11 +153,11 @@ const Close = () => {
 
   //追蹤止盈單
   const trailingOrder = async () => {
-    if (!(parseInt(activationPercentage) <= 500 && 1 <= parseInt(activationPercentage))) {
+    if (!(parseFloat(activationPercentage) <= 500 && 1 <= parseFloat(activationPercentage))) {
       alert("目標%數請輸入1-500的數字")
       return
     }
-    if (!(parseInt(callbackRate) <= 5 && 0.1 <= parseInt(callbackRate))) {
+    if (!(parseFloat(callbackRate) <= 5 && 0.1 <= parseFloat(callbackRate))) {
       alert("追蹤%數請輸入0.1-5的數字")
       return
     }
@@ -351,11 +351,11 @@ const Close = () => {
   }
 
   const handleChangeInputAcPercentage = (event) => {
-    setActivationPercentage(parseInt(event.target.value))
+    setActivationPercentage(parseFloat(event.target.value))
   }
 
   const handleChangeInputCallbackRate = (event) => {
-    setCallbackRate(parseInt(event.target.value))
+    setCallbackRate(parseFloat(event.target.value))
   }
 
   const handleChangeInputReapeat = (event) => {
