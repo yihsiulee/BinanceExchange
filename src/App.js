@@ -38,13 +38,13 @@ function App() {
 
 
   const [allTicker, setAllTicker] = useState(0)
-  const [accountEvent, setAccountEvent] = useState({})
+  const [userRefreshFlag, setUserRefreshFlag] = useState({})
   const users = [
     { id: 0, apiKey: REACT_APP_USER1_APIKEY, secret: REACT_APP_USER1_SECRET },
     { id: 1, apiKey: REACT_APP_USER2_APIKEY, secret: REACT_APP_USER2_SECRET },
   ]
 
-  // console.log("global",global)
+  // console.log("global",global.userRefreshFlag)
 
   // 初始化使用者, 將每個使用者的apiKey,secret分別建立exchange再存到global
   useEffect(() => {
@@ -71,7 +71,7 @@ function App() {
 
 
       setGlobal((prev) => {
-        return { ...prev, users: exchanges }
+        return { ...prev, users: exchanges}
       })
     }
     init()
@@ -133,9 +133,9 @@ function App() {
       client.onmessage = (message) => {
 
         //當作觸發其他useEffect的條件
-        setAccountEvent(JSON.parse(message.data))
+        setUserRefreshFlag(JSON.parse(message.data))
         setGlobal((prev) => {
-          return { ...prev, accountEvent: JSON.parse(message.data) }
+          return { ...prev, userRefreshFlag: JSON.parse(message.data) }
         })
         console.log("change response:", JSON.parse(message.data))
       }
@@ -144,10 +144,10 @@ function App() {
   }, [wsKey])
 
 
-  //更新條件：accountEven（有推送帳戶訊息時）,firstUserExchange 更新balance,position和account
+  //更新條件：userRefreshFlag（有推送帳戶訊息時）,firstUserExchange 更新balance,position和account
   useEffect(() => {
-    const getData = async (user) => {
 
+    const getData = async (user) => {
       // 如果使用者是null時跳出
       if (!user.exchange) return
       const balanceData = await getBalance(user.exchange)
@@ -176,14 +176,18 @@ function App() {
             total_income_week += parseFloat(m.income)
 
             // 加總近24小時獲利
-            if (timeDifference(new Date().getTime(), m.time).daysDifference < 1)
+            if (timeDifference(new Date().getTime(), m.time).daysDifference < 1){
               total_income_day += parseFloat(m.income)
+            }
           })
 
         newUserData[user.id].account = accountData
         newUserData[user.id].position = Object.values(accountData.positions).filter(
           (item) => Math.abs(item.positionAmt) > 0 //絕對值
         )
+
+        console.log(total_income_day) 
+
         newUserData[user.id].profitDay = total_income_day.toFixed(5)
         newUserData[user.id].profitWeek = total_income_week.toFixed(5)
         // newUserData[user.id].orders = 
@@ -214,8 +218,7 @@ function App() {
     for (let user of global.users) {
       getData(user)
     }
-
-  }, [accountEvent, firstUserExchange])
+  }, [userRefreshFlag, firstUserExchange, global.userRefreshFlag])
 
   // 換symbol時,要更新leverage,更新MinQty,MinTickerSize
   useEffect(() => {
@@ -282,7 +285,6 @@ function App() {
 
 
   }, [slideValue, symbol, firstUserExchange])
-
 
   //調整槓桿倍率
   const handleChangeSlide = (event, newValue) => {
