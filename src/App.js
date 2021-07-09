@@ -186,7 +186,7 @@ function App() {
           (item) => Math.abs(item.positionAmt) > 0 //絕對值
         )
 
-        console.log(total_income_day) 
+        // console.log(total_income_day) 
 
         newUserData[user.id].profitDay = total_income_day.toFixed(5)
         newUserData[user.id].profitWeek = total_income_week.toFixed(5)
@@ -207,11 +207,11 @@ function App() {
         }
       })
 
-      console.log("balance", parseFloat(
-        Object.values(balanceData)
-          .filter((item) => item.asset === 'USDT')
-          .map((b) => b?.availableBalance)
-      ))
+      // console.log("balance", parseFloat(
+      //   Object.values(balanceData)
+      //     .filter((item) => item.asset === 'USDT')
+      //     .map((b) => b?.availableBalance)
+      // ))
 
     }
     if (!global.users) return

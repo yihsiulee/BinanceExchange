@@ -4,9 +4,13 @@ import { GlobalContext } from '../context'
 import { InputTextField } from '../styles'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { closeMarketOrder, marketStopLoss, cancelOrder, trailingStop, getAccount, getAllOrder } from '../api'
+
 import _, { set } from 'lodash'
 
 const Close = () => {
+
+ 
+  
   const [global] = useContext(GlobalContext)
   const [position, setPosition] = useState()
   const [inputValueSellAll, setInputValueSellAll] = useState()
@@ -37,6 +41,7 @@ const Close = () => {
     // setPosition(global.position)//要改
     setSymbol(global.symbol)
     setMinQty(global.minQty)
+
   }, [global])
 
   useEffect(() => {
@@ -45,7 +50,6 @@ const Close = () => {
     repeatSell()
   }, [price])
   // console.log("close:",global)
-
 
 
   //一鍵市價平倉 func 
@@ -62,7 +66,7 @@ const Close = () => {
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
         .map(async (p) => {
-          console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
+          // console.log(symbol, 'old', p.positionAmt, Math.abs(p.positionAmt))
 
           let side = ''
           //倉位數量大於0，一鍵平倉side則設為sell，反之則相反
@@ -106,6 +110,7 @@ const Close = () => {
     var message = ""
     if (!global.users) return
     for await (let [i, user] of global.users.entries()) {
+      // console.log("user.position",i,user.position)
       Object.values(user.position)
         .filter((item) => Math.abs(item.positionAmt) > 0)
         .map(async (p) => {
@@ -134,8 +139,8 @@ const Close = () => {
             )
             // stopPrice = (Math.floor((((100+parseFloat((inputValueStopLoss/leverage).toFixed(2)))/100)*price)/minTickerSize)*minTickerSize)
           }
-          console.log(inputValueStopLoss / leverage, stopPrice)
-          console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
+          // console.log(inputValueStopLoss / leverage, stopPrice)
+          // console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'stopPrice:', stopPrice)
 
           await marketStopLoss(user.exchange, symbol, side, Math.abs(p.positionAmt), stopPrice)
             .then((result) => {
@@ -193,11 +198,11 @@ const Close = () => {
               )
             )
           }
-          console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
+          // console.log('symbol:', symbol, 'side:', side, 'amount:', Math.abs(p.positionAmt), 'activationPrice:', activationPrice, "callbackRate:", callbackRate)
 
           await trailingStop(user.exchange, symbol, side, Math.abs(p.positionAmt), activationPrice, callbackRate)
             .then((result) => {
-              console.log(result)
+              // console.log(result)
               message = message + "user: " + user.id + " 委託成功: " + symbol + " 觸發價格: " + result.info.activatePrice + "\n"
             }).catch((e) => {
               message = message + "user: " + user.id + ", " + symbol + " 委託失敗： " + e + "\n"
@@ -283,16 +288,17 @@ const Close = () => {
             setRepeatSymbol('')
             setRepeatSide('')
             setRepeatPrice(0)
+            cancelAllOrder()
           }
         }
         //持空倉狀況
         else if (repeatSymbol === symbol && repeatSide === "buy" && repeatPrice < price && repeatPrice !== 0) {
           //有"只平倉"參數
-          console.log(user.exchange,
-            symbol,
-            repeatSide,
-            Math.abs(positionAmount)
-          )
+          // console.log(user.exchange,
+          //   symbol,
+          //   repeatSide,
+          //   Math.abs(positionAmount)
+          // )
           closeMarketOrder(
             user.exchange,
             symbol,
@@ -303,6 +309,7 @@ const Close = () => {
             setRepeatSymbol('')
             setRepeatSide('')
             setRepeatPrice(0)
+            cancelAllOrder()
           }
           console.log("空單止損rrr")
         }
@@ -363,47 +370,18 @@ const Close = () => {
   }
 
 
+  const sendAllOrderparams = async () => {
+    await trailingOrder()
+    onClickSetRepeatParams()
+  }
+
+
 
   return (
     <div className="space-y-4">
+
       <div className="flex items-center">
         <span className="text-red-600 text-lg mr-5 font-bold">以下皆用市價根據%數算出止盈/止損價格</span>
-      </div>
-      <div className="flex items-center">
-        <span className="text-red-600 text-lg mr-5 font-bold">(全倉)市價止損掛單參數:</span>
-      </div>
-      <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">觸發止損價格(持多倉/持空倉):
-
-          {parseFloat((((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
-          /
-          {parseFloat((((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
-        </span>
-      </div>
-      <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">止損%數:</span>
-        <InputTextField
-          label="止損%數"
-          variant="outlined"
-          color="primary"
-          size="small"
-          onChange={handleChangeInputStopLoss}
-          InputProps={{
-            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-          }}
-        />
-      </div>
-
-      <div className="flex items-center">
-        {symbol ? (
-          <Button onClick={stopLossOrder} size="small" variant="contained" color="primary">
-            confirm
-          </Button>
-        ) : (
-          <Button disabled onClick={stopLossOrder} size="small" variant="contained" color="primary">
-            confirm
-          </Button>
-        )}
       </div>
 
       {/* 重複止損 */}
@@ -476,7 +454,8 @@ const Close = () => {
           )}
         </span>
       </div>
-
+{/* 重複止損 end*/}
+{/* 追蹤止盈掛單 */}
       <div className="flex items-center">
         <span className="text-red-600 text-lg mr-5 font-bold">(全倉)追蹤止盈掛單:</span>
       </div>
@@ -523,15 +502,28 @@ const Close = () => {
       </div>
 
       <div className="flex items-center">
-        {symbol ? (
-          <Button onClick={trailingOrder} size="small" variant="contained" color="primary">
-            確認追蹤止盈
-          </Button>
-        ) : (
-          <Button disabled onClick={trailingOrder} size="small" variant="contained" color="primary">
-            確認追蹤止盈
-          </Button>
-        )}
+        <span className="text-white text-lg"> 
+          {symbol ? (
+              <Button onClick={trailingOrder} size="small" variant="contained" color="primary">
+                確認追蹤止盈
+              </Button>
+            ) : (
+              <Button disabled onClick={trailingOrder} size="small" variant="contained" color="primary">
+                確認追蹤止盈
+              </Button>
+            )}
+        </span>
+        <span className="text-white text-lg ml-5"> 
+          {symbol ? (
+            <Button onClick={sendAllOrderparams} size="small" variant="contained" color="primary">
+                一鍵設定掛單
+            </Button>
+          ) : (
+            <Button disabled onClick={sendAllOrderparams} size="small" variant="contained" color="primary">
+                一鍵設定掛單
+            </Button>
+          )}
+        </span>
       </div>
 
       <div className="flex items-center">
@@ -539,9 +531,6 @@ const Close = () => {
       </div>
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">當前幣種:{symbol}</span>
-      </div>
-
-      <div className="flex items-center">
         {symbol ? (
           <Button onClick={cancelAllOrder} size="small" variant="contained" color="primary">
             confirm
@@ -552,7 +541,9 @@ const Close = () => {
           </Button>
         )}
       </div>
+{/* 追蹤止盈掛單end */}
 
+{/* 手動平倉 */}
       <div className="flex items-center">
         <span className="text-red-600 text-lg mr-5 font-bold">平倉參數:</span>
       </div>
@@ -569,18 +560,59 @@ const Close = () => {
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
           }}
         />
+        <span className="text-white text-lg ml-5">
+          {symbol ? (
+            <Button onClick={sellAllOrder} size="small" variant="contained" color="primary">
+              confirm
+            </Button>
+          ) : (
+            <Button disabled onClick={sellAllOrder} size="small" variant="contained" color="primary">
+              confirm
+            </Button>
+          )}
+        </span>
+        
+      </div>
+{/* 手動平倉end */}    
+
+      {/* 市價止損掛單 */}
+      <div className="flex items-center">
+        <span className="text-red-600 text-lg mr-5 font-bold">(全倉)市價止損掛單參數:</span>
       </div>
       <div className="flex items-center">
-        {symbol ? (
-          <Button onClick={sellAllOrder} size="small" variant="contained" color="primary">
-            confirm
-          </Button>
-        ) : (
-          <Button disabled onClick={sellAllOrder} size="small" variant="contained" color="primary">
-            confirm
-          </Button>
-        )}
+        <span className="text-white text-lg mr-5 font-bold">觸發止損價格(持多倉/持空倉):
+
+          {parseFloat((((100 - parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
+          /
+          {parseFloat((((100 + parseFloat((inputValueStopLoss / leverage).toFixed(2))) / 100) * price).toFixed(!minTickerSize ? 0 : minTickerSize.toString().length - 2))}
+        </span>
       </div>
+      <div className="flex items-center">
+        <span className="text-white text-lg mr-5 font-bold">止損%數:</span>
+        <InputTextField
+          label="止損%數"
+          variant="outlined"
+          color="primary"
+          size="small"
+          onChange={handleChangeInputStopLoss}
+          InputProps={{
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+          }}
+        />
+        <span className="text-white text-lg ml-5">
+          {symbol ? (
+            <Button onClick={stopLossOrder} size="small" variant="contained" color="primary">
+              confirm
+            </Button>
+          ) : (
+            <Button disabled onClick={stopLossOrder} size="small" variant="contained" color="primary">
+              confirm
+            </Button>
+          )}
+        </span>
+      </div>
+      {/* 市價止損掛單end */}
+
     </div>
   )
 }

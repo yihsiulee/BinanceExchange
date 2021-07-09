@@ -16,7 +16,6 @@ import { promisify } from 'util'
 const Open = () => {
   const [side, setSide] = useState('buy')
   const [inputValue, setInpuValue] = useState('')
-  const [availableBalance, setAvailableBalance] = useState(0)
   const [leverage, setLeverage] = useState(1)
   const [global] = useContext(GlobalContext)
   const [price, setPrice] = useState(0)
@@ -59,24 +58,24 @@ const Open = () => {
     //以下註解 console勿刪
     if (!global.users) return
     for await (let [i, user] of global.users.entries()) {
-      console.log(
-        'symbol:',
-        symbol,
-        '多空:',
-        side,
-        '幾趴:',
-        inputValue,
-        '買入數量:',
-        parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty),
-        'availableBalance',
-        user.availableBalance,
-        'leverage',
-        leverage,
-        'price',
-        price,
-        "user.exchange",
-        user.exchange
-      )
+      // console.log(
+      //   'symbol:',
+      //   symbol,
+      //   '多空:',
+      //   side,
+      //   '幾趴:',
+      //   inputValue,
+      //   '買入數量:',
+      //   parseFloat(Math.floor((((user.availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty),
+      //   'availableBalance',
+      //   user.availableBalance,
+      //   'leverage',
+      //   leverage,
+      //   'price',
+      //   price,
+      //   "user.exchange",
+      //   user.exchange
+      // )
       await openMarketOrder(
         user.exchange,
         symbol,
@@ -92,12 +91,10 @@ const Open = () => {
         alert(message)
       }
     }
-
-
-
   }
 
   return (
+    // 開倉移到close.js
     <div className="space-y-2">
       <div className="flex items-center">
         <span className="text-red-600 text-lg mr-5 font-bold">市價開倉:</span>
@@ -124,13 +121,9 @@ const Open = () => {
           </div>
         </span>
       </div>
-      {/* <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">開倉時間:</span>
-        <InputTextField label="time" variant="outlined" color="primary" size="small" />
-      </div> */}
+
       <div className="flex items-center">
         <span className="text-white text-lg mr-5 font-bold">開倉數量:</span>
-        {/* TODO:設定filter 1-100% */}
         <InputTextField
           label="開倉%數"
           variant="outlined"
@@ -141,22 +134,11 @@ const Open = () => {
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
           }}
         />
-        {/* {console.log(inputValue)} */}
       </div>
 
       <div className="flex items-center">
-        {/* <span className="text-white text-lg mr-5 font-bold">
-          可買入數量:{((availableBalance * leverage) / price) * (inputValue / 100)}
-        </span> */}
         <span className="text-white text-lg mr-5 font-bold">此幣種最低買入單位:{minQty ? minQty : 0}顆</span>
       </div>
-
-      {/* <div className="flex items-center">
-        <span className="text-white text-lg mr-5 font-bold">
-          實際買入數量:
-          {parseFloat(Math.floor((((availableBalance * leverage) / price) * (inputValue / 100)) / minQty) * minQty)}
-        </span>
-      </div> */}
 
       <div className="flex items-center">
         <Button onClick={handleButtonClick} size="small" variant="contained" color="primary">
